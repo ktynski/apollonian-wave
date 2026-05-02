@@ -145,7 +145,9 @@
 }
 
 \title{Echo Interference and the Riemann Hypothesis:\\
-Number-Theoretic Acoustic Spacetime}
+Number-Theoretic Acoustic Spacetime\thanks{%
+Companion repository (LaTeX source, PDF, and 238 verifying tests):
+\url{https://github.com/ktynski/apollonian-wave}.}}
 
 \author{Kristin Tynski}
 
@@ -160,7 +162,9 @@ Number-Theoretic Acoustic Spacetime}
 \textbf{MSC 2020:} 11M26 (Primary); 37C30, 15A66, 11D45 (Secondary).\\
 \textbf{Keywords:} Riemann hypothesis, Collatz conjecture, geometric
 algebra, Clifford algebra, transfer operator, Apollonian packing,
-witness bundle, Logos section, golden ratio.
+witness bundle, Logos section, golden ratio.\\
+\textbf{Code:} \url{https://github.com/ktynski/apollonian-wave}
+(238 tests, MIT License).
 \end{center}
 
 \begin{abstract}
@@ -235,8 +239,9 @@ intersection \(\bigcap_{x\in F_7}\spn\{W,Y(x)\}\) of the seven legal
 \cref{rmk:logos-uniqueness-deductive}).
 
 \medskip\noindent
-\textbf{Verification.}  238 numerical tests in the accompanying
-\texttt{apollonian-wave/tests/} repository verify: the tuple data
+\textbf{Verification.}  238 numerical tests in the companion
+repository \url{https://github.com/ktynski/apollonian-wave}
+(\texttt{apollonian-wave/tests/}) verify: the tuple data
 \((X,T,V_W,\iota,\nabla,\Lambda,\delta)\) for both instances; the
 deductive uniqueness of \(\Lambda\) (intersection-of-eigenspaces);
 framework-robustness across formulations; the strict-decay property
@@ -6798,6 +6803,136 @@ specializations.}
 \label{tab:twenty-six}
 \end{table}
 
+\begin{figure}[ht]
+\centering
+\resizebox{0.92\textwidth}{!}{%
+\begin{tikzpicture}[
+  x=1cm, y=1cm,
+  hubNode/.style={
+    draw=echoPseudo!75!black, ultra thick,
+    fill=echoPseudo!22, circle, minimum size=24mm,
+    align=center, font=\small\bfseries
+  },
+  algNode/.style={
+    draw=echoPseudo!70!black, very thick,
+    fill=echoPseudo!14, circle, minimum size=10mm,
+    align=center, font=\scriptsize\bfseries
+  },
+  anaNode/.style={
+    draw=echoCritical!70!black, very thick,
+    fill=echoCritical!14, circle, minimum size=10mm,
+    align=center, font=\scriptsize\bfseries
+  },
+  topoNode/.style={
+    draw=echoField!70!black, very thick,
+    fill=echoField!18, circle, minimum size=10mm,
+    align=center, font=\scriptsize\bfseries
+  },
+  infoNode/.style={
+    draw=echoScalar!75!black, very thick,
+    fill=echoScalar!28, circle, minimum size=10mm,
+    align=center, font=\scriptsize\bfseries
+  },
+  numNode/.style={
+    draw=echoRotation!75!black, very thick,
+    fill=echoRotation!22, circle, minimum size=10mm,
+    align=center, font=\scriptsize\bfseries
+  },
+  physNode/.style={
+    draw=echoBoost!70!black, very thick,
+    fill=echoBoost!18, circle, minimum size=10mm,
+    align=center, font=\scriptsize\bfseries
+  },
+  spoke/.style={-, gray!45, thin},
+  ifEdge/.style={-, gray!40!black, dashed, thin}
+]
+
+  %% --- Hub: Logos section ---
+  \node[hubNode] (Lambda) at (0, 0) {$\Lambda$\\[-1pt]\scriptsize Logos\\[-2pt]\scriptsize section};
+
+  %% --- 26 nodes evenly distributed around the circle ---
+  %% angle = 90 - (i-1)*(360/26), radius = 7
+  \foreach \i/\type in {1/physNode,2/topoNode,3/numNode,4/algNode,5/anaNode,6/topoNode,7/anaNode,8/infoNode,9/anaNode,10/physNode,11/numNode,12/algNode,13/topoNode,14/infoNode,15/infoNode,16/algNode,17/algNode,18/infoNode,19/numNode,20/topoNode,21/infoNode,22/physNode,23/algNode,24/topoNode,25/algNode,26/infoNode} {
+    \pgfmathtruncatemacro{\ang}{90 - (\i-1)*(360/26)}
+    \node[\type] (n\i) at (\ang:7) {\i};
+    \draw[spoke] (Lambda) -- (n\i);
+  }
+
+  %% --- Selected iff edges (representative cross-domain equivalences) ---
+  \draw[ifEdge] (n5) to[bend right=18] (n20);
+  \draw[ifEdge] (n16) to[bend right=18] (n23);
+  \draw[ifEdge] (n7) to[bend right=12] (n9);
+  \draw[ifEdge] (n4) to[bend left=18] (n16);
+  \draw[ifEdge] (n13) to[bend left=15] (n17);
+  \draw[ifEdge] (n10) to[bend right=15] (n9);
+
+  %% --- #27 meta annotation pointing to the hub ---
+  \node[align=center, font=\small\itshape, gray!55!black, anchor=west]
+    at (8.4, 7.0) {\#27 (meta):\\existence \& uniqueness\\of the Logos section};
+  \draw[gray!60, ->, thick] (8.4, 6.0) to[bend right=15] (Lambda.north east);
+
+  %% --- Domain hint labels at each sextant ---
+  \node[font=\footnotesize\itshape, echoPseudo!70!black, anchor=south]
+    at (-5.9, 5.0) {algebraic};
+  \node[font=\footnotesize\itshape, echoCritical!70!black, anchor=south]
+    at (-7.4, 0.5) {analytic};
+  \node[font=\footnotesize\itshape, echoField!70!black, anchor=north]
+    at (-5.9, -5.0) {topological};
+  \node[font=\footnotesize\itshape, echoScalar!85!black, anchor=north]
+    at (1.7, -7.0) {info / coding};
+  \node[font=\footnotesize\itshape, echoRotation!85!black, anchor=north]
+    at (5.6, -4.7) {arithmetic};
+  \node[font=\footnotesize\itshape, echoBoost!70!black, anchor=south]
+    at (5.6, 4.7) {physical};
+
+  %% --- Legend ---
+  \node[draw=gray!45, rounded corners=4pt, fill=white,
+        align=left, font=\scriptsize, anchor=north west,
+        text width=15cm, inner sep=6pt]
+    at (-7.5, -8.5) {
+    \textbf{Domain colour key (formulations from
+    \cref{tab:twenty-six}):}\\[1pt]
+    \textcolor{echoPseudo!70!black}{$\bullet$ algebraic / categorical}:
+    \#4 ($\Cl(1,1)$ braid), \#12 (categorical),
+    \#16 (representation), \#17 (homological), \#23 (operadic),
+    \#25 (sheaf-theoretic)\\
+    \textcolor{echoCritical!70!black}{$\bullet$ analytic / spectral}:
+    \#5 (transfer operator), \#7 (ergodic measure),
+    \#9 (large deviation)\\
+    \textcolor{echoField!70!black}{$\bullet$ topological / dynamical}:
+    \#2 (inversive map), \#6 (parity shift), \#13 (Syracuse digraph),
+    \#20 (global attractor), \#24 (RG / universality)\\
+    \textcolor{echoScalar!85!black}{$\bullet$ information / coding /
+    computability}: \#8 (Kolmogorov), \#14 (cellular automaton),
+    \#15 (ZX calculus), \#18 (model-theoretic),
+    \#21 (error-correcting code), \#26 (quantum entanglement)\\
+    \textcolor{echoRotation!85!black}{$\bullet$ arithmetic / $p$-adic}:
+    \#3 (Euclidean), \#11 ($+1$ seam), \#19 ($p$-adic basin)\\
+    \textcolor{echoBoost!70!black}{$\bullet$ physical / thermodynamic
+    / game}: \#1 (acoustic ringdown), \#10 (entropy decrease),
+    \#22 (Devourer game)
+  };
+
+\end{tikzpicture}}
+\caption{\textbf{The 27-formulation network.} The 26 framework-specific
+formulations of \cref{tab:twenty-six} are projections of a single
+binding object: the global Logos section $\Lambda$
+(\cref{def:logos-section},\cref{thm:logos-existence-uniqueness}),
+shown at the hub.  Each spoke realises ``finite specification with
+positive drift cannot sustain infinite avoidance'' in its own
+framework; each is a corollary of \cref{thm:witness-return-master}
+applied to the Cl(1,1) Collatz instance via the orbit-aware lift
+$\mathcal{F}_2$ (\cref{thm:F2-exact-cap}).  Dashed cross-edges
+indicate representative inter-domain equivalences (e.g.\ spectral
+gap $\#5$ $\Leftrightarrow$ global attractor $\#20$;
+representation $\#16$ $\Leftrightarrow$ operadic $\#23$).  The
+$27$th formulation is the meta-statement: existence and uniqueness
+of $\Lambda$ itself.  This is the most parsimonious form of the
+witness architecture: one section, twenty-six framework-specific
+shadows, no separate axioms.}
+\label{fig:twenty-seven-network}
+\end{figure}
+
 \begin{remark}[Why exactly twenty-six---and one binding object]
 \label{rmk:why-26}
 The number $26$ is not a count of conveniences---it is the
@@ -7025,6 +7160,164 @@ $\E[a_i]-\log_2 3$.  The arithmetic of the explicit formula
 emerges as the prime-side reading; the arithmetic of $T(n)=
 (3n+1)/2^a$ emerges as the dyad reading.  Both reach the
 same residue contradiction at the fixed seam.
+\Cref{fig:unified-rh-collatz-architecture} shows this
+unification graphically.
+
+\begin{figure}[ht]
+\centering
+\resizebox{0.97\textwidth}{!}{%
+\begin{tikzpicture}[
+  x=1cm, y=1cm,
+  apexBox/.style={
+    draw=gray!75!black, very thick, fill=echoScalar!18,
+    rounded corners=5pt, minimum height=12mm, text width=9.2cm,
+    align=center, font=\small
+  },
+  bundleBox/.style={
+    draw=echoPseudo!70!black, very thick, fill=echoPseudo!8,
+    rounded corners=5pt, minimum height=12mm, text width=8cm,
+    align=center, font=\small
+  },
+  rhBox/.style={
+    draw=echoBoost!70!black, very thick, fill=echoBoost!10,
+    rounded corners=4pt, minimum height=11mm, text width=6.4cm,
+    align=center, font=\footnotesize
+  },
+  collatzBox/.style={
+    draw=echoCritical!70!black, very thick, fill=echoCritical!10,
+    rounded corners=4pt, minimum height=11mm, text width=6.4cm,
+    align=center, font=\footnotesize
+  },
+  rhFinal/.style={
+    draw=echoBoost!70!black, ultra thick, fill=echoBoost!22,
+    rounded corners=5pt, minimum height=11mm, text width=5.6cm,
+    align=center, font=\bfseries\small
+  },
+  collatzFinal/.style={
+    draw=echoCritical!70!black, ultra thick, fill=echoCritical!22,
+    rounded corners=5pt, minimum height=11mm, text width=5.6cm,
+    align=center, font=\bfseries\small
+  },
+  flow/.style={
+    -{Stealth[length=3mm]}, very thick, gray!70!black
+  }
+]
+  %% --- Apex: master theorem ---
+  \node[apexBox] (master) at (7, 12.3) {
+    \textbf{Witness Return Master Theorem}\\
+    \footnotesize (\cref{thm:witness-return-master},
+    \cref{thm:global-logos-return})\\[1pt]
+    \footnotesize\emph{Finite specification with positive drift
+    cannot sustain infinite avoidance.}
+  };
+
+  %% --- Unified bundle ---
+  \node[bundleBox] (bundle) at (7, 9.7) {
+    \textbf{Witness Bundle}
+    $(E,\nabla_{\mathcal{M}},\iota,\Lambda)$\\
+    \footnotesize Unique global Logos section
+    $\Lambda=Y_0^0=W$\\
+    \footnotesize (\cref{def:logos-section},
+    \cref{thm:logos-existence-uniqueness})
+  };
+  \draw[flow] (master.south) -- (bundle.north);
+
+  %% --- Two specialisations ---
+  \node[rhBox] (rhSpec) at (2.5, 7.0) {
+    \textbf{$\Cl(3,1)$ specialisation (RH)}\\[2pt]
+    algebra: $\Cl(3,1)$\\
+    involution: $s\mapsto 1{-}s$\\
+    spinor norm: $\rho(1{-}\rho)$\\
+    drift: $\vp^{-4}$ pseudoscalar contraction
+  };
+  \node[collatzBox] (collSpec) at (11.5, 7.0) {
+    \textbf{$\Cl(1,1)$ specialisation (Collatz)}\\[2pt]
+    algebra: $\Cl(1,1)$\\
+    involution: $e_1\leftrightarrow e_2$\\
+    spinor norm: $\Cl^+(1,1)$\\
+    drift: $\E[a_i]-\log_2 3>0$
+  };
+  \draw[flow, echoBoost!70!black] (bundle.south) to[bend right=18] (rhSpec.north);
+  \draw[flow, echoCritical!70!black] (bundle.south) to[bend left=18] (collSpec.north);
+
+  %% --- Domain structure ---
+  \node[rhBox] (rhStruct) at (2.5, 4.3) {
+    Apollonian curvature null cone\\
+    Prime register / zero register\\
+    Explicit formula as wave equation\\
+    Pole-shift map $\rho\to\rho'$
+  };
+  \node[collatzBox] (collStruct) at (11.5, 4.3) {
+    Collatz braid in $\Cl(1,1)$\\
+    Dyadic dynamics on $\{2,3\}$\\
+    Syracuse map $T(n)=(3n{+}1)/2^a$\\
+    Canonical-exact-cap section
+    $\mathcal{F}^{\dagger}$
+  };
+  \draw[flow, echoBoost!70!black] (rhSpec.south) -- (rhStruct.north);
+  \draw[flow, echoCritical!70!black] (collSpec.south) -- (collStruct.north);
+
+  %% --- Mechanism ---
+  \node[rhBox] (rhMech) at (2.5, 1.7) {
+    Propagated-identity residue\\
+    contradiction forces
+    $\beta=\tfrac12$
+  };
+  \node[collatzBox] (collMech) at (11.5, 1.7) {
+    Cycle obstruction\,+\,exact cap\\
+    via $\mathcal{F}_2$
+    (\cref{thm:F2-exact-cap})
+  };
+  \draw[flow, echoBoost!70!black] (rhStruct.south) -- (rhMech.north);
+  \draw[flow, echoCritical!70!black] (collStruct.south) -- (collMech.north);
+
+  %% --- Bottom: famous corollaries ---
+  \node[rhFinal] (rh) at (2.5, -0.9) {
+    Riemann Hypothesis\\[1pt]
+    \footnotesize\normalfont (\cref{thm:main-rh})
+  };
+  \node[collatzFinal] (collatz) at (11.5, -0.9) {
+    Collatz Conjecture\\[1pt]
+    \footnotesize\normalfont
+    (\cref{thm:collatz-witness-return})
+  };
+  \draw[flow, echoBoost!70!black, ultra thick] (rhMech.south) -- (rh.north);
+  \draw[flow, echoCritical!70!black, ultra thick] (collMech.south) -- (collatz.north);
+
+  %% --- Sibling annotation ---
+  \draw[gray!50, dashed, very thick]
+    (rh.east) -- node[midway, anchor=south, font=\scriptsize\itshape, gray!60!black]
+    {two specialisations of one master} (collatz.west);
+
+  %% --- Side level annotations ---
+  \node[font=\scriptsize\itshape, gray!55!black, anchor=east]
+    at (-1.5, 12.3) {Apex};
+  \node[font=\scriptsize\itshape, gray!55!black, anchor=east]
+    at (-1.5, 9.7) {Unified};
+  \node[font=\scriptsize\itshape, gray!55!black, anchor=east]
+    at (-1.5, 7.0) {Specialise};
+  \node[font=\scriptsize\itshape, gray!55!black, anchor=east]
+    at (-1.5, 4.3) {Structure};
+  \node[font=\scriptsize\itshape, gray!55!black, anchor=east]
+    at (-1.5, 1.7) {Mechanism};
+  \node[font=\scriptsize\itshape, gray!55!black, anchor=east]
+    at (-1.5, -0.9) {Theorem};
+
+\end{tikzpicture}}
+\caption{\textbf{The unified RH--Collatz architecture.}  Both the
+Riemann Hypothesis and the Collatz Conjecture are corollaries of
+the Witness Return Master Theorem
+(\cref{thm:witness-return-master},\cref{thm:global-logos-return}),
+specialised to the Clifford algebras $\Cl(3,1)$ and $\Cl(1,1)$
+respectively.  The four load-bearing components of any closed
+witness system---algebra, involution, spinor norm, drift---are
+populated by problem-specific data, and the same witness bundle
+$(E,\nabla_{\mathcal{M}},\iota,\Lambda)$ with its unique Logos
+section $\Lambda$ produces both proofs.  The structural content
+is not number-theoretic or dynamical: it is the impossibility of
+infinite avoidance under finite specification with positive drift.}
+\label{fig:unified-rh-collatz-architecture}
+\end{figure}
 
 \Cref{tab:twenty-six} catalogues twenty-six independent
 mathematical frameworks in which the witness-return statement
@@ -7495,8 +7788,9 @@ The test modules were:
 \end{center}
 
 The Collatz extension (\cref{sec:collatz}) is verified by an
-additional seventeen test modules in
-\texttt{apollonian-wave/tests/}:
+additional seventeen test modules in the companion repository
+\url{https://github.com/ktynski/apollonian-wave}
+(\texttt{apollonian-wave/tests/}):
 \begin{center}
 \begin{minipage}{0.78\linewidth}
 \small
