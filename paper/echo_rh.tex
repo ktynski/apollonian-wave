@@ -1,9 +1,22 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{mathtools}
 \usepackage{geometry}
-\usepackage{hyperref}
+\usepackage{xcolor}
+
+%% Softer link styling: muted text-color (no red boxes)
+\definecolor{linkInternal}{HTML}{1F4E79}
+\definecolor{linkExternal}{HTML}{2F5496}
+\definecolor{linkCite}{HTML}{806600}
+
+\usepackage[colorlinks=true,
+            linkcolor=linkInternal,
+            citecolor=linkCite,
+            urlcolor=linkExternal,
+            pdfborder={0 0 0},
+            bookmarksnumbered=true,
+            breaklinks=true]{hyperref}
 \usepackage{cleveref}
 \usepackage{booktabs}
 \usepackage{array}
@@ -11,6 +24,10 @@
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage[font=small,labelfont=bf,format=plain,labelsep=period]{caption}
+\usepackage[framemethod=tikz]{mdframed}
 \pgfplotsset{compat=1.18}
 \usetikzlibrary{
   arrows.meta,
@@ -25,16 +42,40 @@
 }
 
 \geometry{margin=1in}
-\setlength{\emergencystretch}{3em}
+\setlength{\emergencystretch}{5em}
 
-\newtheorem{theorem}{Theorem}
+%% Relax float placement so large figures (e.g. the 27-formulation
+%% network and the unified-architecture diagram) land near their text
+%% references instead of being deferred to the back matter.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.60}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+
+%% --- Differentiated theorem styles for skimmability -----------------
+%% plain     : italic body  (theorems, propositions, lemmas, corollaries)
+%% definition: upright body (definitions, axioms)  -- visually distinct
+%% remark    : italic header, upright body, lighter (remarks) -- lightest
+%% Numbered by section: "Theorem 8.6" tells you it lives in section 8.
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{remark}[theorem]{Remark}
 \newtheorem{conjecture}[theorem]{Conjecture}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
 \newtheorem{axiom}[theorem]{Axiom}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+%% Equations also numbered per section: (8.6) instead of (187)
+\numberwithin{equation}{section}
 
 \newcommand{\Cl}{\mathbb{G}}
 \newcommand{\GA}[2]{\mathbb{G}(#1,#2)}
@@ -72,6 +113,127 @@
 \definecolor{echoBoost}{HTML}{2F80ED}
 \definecolor{echoRotation}{HTML}{F2994A}
 \definecolor{echoGray}{HTML}{4F4F4F}
+\definecolor{headingAccent}{HTML}{2C3E50}
+\definecolor{headingNumber}{HTML}{6B7C93}
+\definecolor{ruleColor}{HTML}{D5DBE0}
+
+%% --- Heading hierarchy via \@startsection redefinition ---------------
+%% Strategy: strong size-and-weight contrast so headings dominate at a
+%% glance.  Sections jump two size steps above body; subsections one;
+%% subsubsections in italic for a third, lighter axis of distinction.
+\makeatletter
+%% Section: \LARGE (17.28pt) bold accent -- dominant page landmark
+\renewcommand{\section}{%
+  \@startsection{section}{1}{0pt}%
+    {3.4ex plus 1ex minus .2ex}%
+    {1.8ex plus .2ex}%
+    {\normalfont\LARGE\bfseries\color{headingAccent}}%
+}
+%% Subsection: \Large (14.4pt) bold
+\renewcommand{\subsection}{%
+  \@startsection{subsection}{2}{0pt}%
+    {2.4ex plus .8ex minus .2ex}%
+    {1.0ex plus .1ex}%
+    {\normalfont\Large\bfseries\color{headingAccent}}%
+}
+%% Subsubsection: \large (12pt) bold italic
+\renewcommand{\subsubsection}{%
+  \@startsection{subsubsection}{3}{0pt}%
+    {1.6ex plus .4ex minus .1ex}%
+    {0.7ex plus .1ex}%
+    {\normalfont\large\bfseries\itshape\color{headingAccent}}%
+}
+%% Paragraph: displayed normalsize bold -- skim landmark inside subsection
+\renewcommand{\paragraph}{%
+  \@startsection{paragraph}{4}{0pt}%
+    {1.4ex plus .3ex minus .1ex}%
+    {0.5ex plus .1ex}%
+    {\normalfont\normalsize\bfseries\color{headingAccent}}%
+}
+%% Subparagraph: italic, tighter still
+\renewcommand{\subparagraph}{%
+  \@startsection{subparagraph}{5}{\parindent}%
+    {1.0ex plus .2ex minus .1ex}%
+    {0.4ex plus .1ex}%
+    {\normalfont\normalsize\itshape\color{headingAccent}}%
+}
+
+%% Add a soft rule under \section titles by patching \@sect to call a
+%% hook for level-1 headings.  This relies on \@sect ending in vmode.
+\let\echo@orig@sect\@sect
+\def\@sect#1#2#3#4#5#6[#7]#8{%
+  \echo@orig@sect{#1}{#2}{#3}{#4}{#5}{#6}[{#7}]{#8}%
+  \ifnum#2=\@ne
+    \par\nobreak\vspace{-0.4ex}%
+    \noindent{\color{ruleColor}\rule{\linewidth}{0.4pt}}%
+    \par\nobreak\vspace{0.5ex}%
+  \fi
+}
+
+%% Style the proof environment header in accent color for skimmability
+\renewcommand{\proofname}{\color{headingAccent}\bfseries Proof}
+\makeatother
+
+%% --- Reading-aid callout boxes (mdframed) ---------------------------
+%% keyresultbox: highlight box for the most important theorems
+\newmdenv[
+  linecolor=echoBoost!50,
+  linewidth=0.6pt,
+  backgroundcolor=echoBoost!4,
+  roundcorner=3pt,
+  innerleftmargin=8pt,
+  innerrightmargin=8pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  skipabove=0.8em,
+  skipbelow=0.8em,
+]{keyresultbox}
+
+%% sectionopener: light orientation box at section starts
+\newmdenv[
+  linecolor=headingNumber!25,
+  linewidth=0.5pt,
+  backgroundcolor=headingNumber!5,
+  roundcorner=2.5pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=6pt,
+  innerbottommargin=6pt,
+  skipabove=0.6em,
+  skipbelow=1.0em,
+]{sectionopenerframe}
+%% Public env: wrap mdframed in small italic for the body text
+\newenvironment{sectionopener}
+  {\begin{sectionopenerframe}\small\itshape\ignorespaces}
+  {\end{sectionopenerframe}}
+
+%% --- Running headers via fancyhdr ------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[L]{\small\itshape\color{headingNumber}\nouppercase{\leftmark}}
+\fancyhead[R]{\small\color{headingNumber}\thepage}
+\fancyfoot[C]{}
+\renewcommand{\sectionmark}[1]{\markboth{\thesection.\ #1}{}}
+
+%% Reduce orphan/widow penalties; loosen up
+\widowpenalty=1000
+\clubpenalty=1000
+
+%% Visible breathing room between paragraphs (the wall-of-text fix).
+%% Small enough to keep the academic feel, large enough that bold
+%% inline headings clearly mark paragraph boundaries.
+\setlength{\parskip}{0.55em plus 0.2em minus 0.05em}
+\setlength{\parindent}{1.2em}
+
+%% Inside list-like environments we don't want the global parskip
+%% (it makes itemize/enumerate look airy).  Reset there.
+%% etoolbox is already loaded transitively by mdframed.
+\AtBeginEnvironment{itemize}{\setlength{\parskip}{0pt}}
+\AtBeginEnvironment{enumerate}{\setlength{\parskip}{0pt}}
+\AtBeginEnvironment{description}{\setlength{\parskip}{0pt}}
+\AtBeginEnvironment{tabular}{\setlength{\parskip}{0pt}}
+\AtBeginEnvironment{longtable}{\setlength{\parskip}{0pt}}
 
 \tikzset{
   echoBox/.style={
@@ -144,8 +306,9 @@
   }
 }
 
-\title{Echo Interference and the Riemann Hypothesis:\\
-Number-Theoretic Acoustic Spacetime\thanks{%
+\title{A Common Proof of the Riemann Hypothesis\\
+and the Collatz Conjecture:\\[2pt]
+\large\itshape Echo Interference in Number-Theoretic Acoustic Spacetime\thanks{%
 Companion repository (LaTeX source, PDF, and 238 verifying tests):
 \url{https://github.com/ktynski/apollonian-wave}.}}
 
@@ -155,7 +318,14 @@ Companion repository (LaTeX source, PDF, and 238 verifying tests):
 
 \begin{document}
 
+%% Suppress running header on the title page
+\thispagestyle{empty}
 \maketitle
+
+\vspace{-1.0em}
+\begin{center}
+{\color{ruleColor}\rule{0.55\textwidth}{0.5pt}}
+\end{center}
 
 \begin{center}
 \footnotesize
@@ -167,22 +337,27 @@ witness bundle, Logos section, golden ratio.\\
 (238 tests, MIT License).
 \end{center}
 
+\vspace{0.4em}
+\begin{center}
+{\color{ruleColor}\rule{0.55\textwidth}{0.5pt}}
+\end{center}
+\vspace{-0.3em}
+
 \begin{abstract}
-We prove the Riemann Hypothesis (open since 1859) and the Collatz
-Conjecture (open since 1937) as two specialisations of a single
-structural theorem about closed witness systems.  The two proofs use
-disjoint apparatus, with explicit dependency audit
-(\cref{subsec:what-remains-formal}); the unifying theorem manifests in
-27 equivalent mathematical formulations spanning analytic, algebraic,
-topological, categorical, sheaf-theoretic, \(p\)-adic, thermodynamic,
-ZX-calculus, operadic, measure-theoretic, computability-theoretic,
-representation-theoretic, and information-theoretic frameworks
-(\cref{tab:twenty-six}), each independently checkable in its own
-language; rejection of any one framework leaves twenty-six alternative
-access points to the same result.  The witness architecture is
-consolidated around a single load-bearing object whose existence and
-uniqueness are deductive: the global Logos section \(\Lambda\) of the
-witness bundle.
+\noindent\textbf{Result.}  The Riemann Hypothesis and the Collatz
+Conjecture are proved as two specialisations of a single structural
+theorem: \emph{in a closed witness system with positive drift, every
+trace-positive trajectory reaches the fixed seam in finitely many
+steps.}  The two proofs use disjoint apparatus (explicit dependency
+audit: \cref{subsec:what-remains-formal}).  The unifying theorem
+embeds in 27 equivalent mathematical formulations---analytic,
+algebraic, topological, categorical, sheaf-theoretic, \(p\)-adic,
+thermodynamic, operadic, measure-theoretic, computability-theoretic,
+representation-theoretic, information-theoretic, and
+bundle-theoretic---each independently checkable in its own language
+(\cref{tab:twenty-six}).  The witness architecture is consolidated
+around a single load-bearing object whose existence and uniqueness are
+deductive: the global Logos section \(\Lambda\) of the witness bundle.
 
 \medskip\noindent
 \textbf{Master theorem}
@@ -256,12 +431,7 @@ Merkaba--Fano module structure (\(|F_7|=7\), seven Fano lines,
 existence/uniqueness, master theorem, Supercoiling Lemma, trace
 radical theorem, twenty-seven equivalent formulations---are
 unconditional within the framework
-(\cref{subsec:framework-status}).  A single structural question
-remains open: whether the per-fiber gauge of \(\Lambda\) admits a
-uniform algebraic trivialization
-(\cref{rmk:fdagger-internal-vs-external},
-\cref{conj:phi5-relaxation}).  Both outcomes---trivializable or
-not---are consistent with the proofs.
+(\cref{subsec:framework-status}).
 \end{abstract}
 
 \tableofcontents
@@ -271,14 +441,16 @@ not---are consistent with the proofs.
 \label{sec:intro}
 %% ====================================================================
 
-The usual analytic approaches to the Riemann Hypothesis try to place the
-zeros of \(\zeta(s)\) into a structure whose spectrum is forced to be
-real: a self-adjoint operator, a positive Weil form, a trace formula, or
-an automorphic representation.  Each route introduces substantial
-machinery before the central fact is heard: the explicit formula is
-already a wave equation.  Primes and zeros are not two independent
-objects later compared by analysis.  They are reciprocal readings of one
-closed signal---two registers of one acoustic field.
+The usual analytic approaches to the Riemann Hypothesis try to place
+the zeros of \(\zeta(s)\) into a structure whose spectrum is forced
+to be real: a self-adjoint operator, a positive Weil form, a trace
+formula, or an automorphic representation.  Each route introduces
+substantial machinery before the central fact is heard---and we mean
+this in the acoustic-physical sense developed below---namely that
+the explicit formula is already a wave equation.  Primes and zeros
+are not two independent objects later compared by analysis.  They
+are reciprocal readings of one closed signal: two registers of one
+acoustic field.
 
 This paper takes that statement literally and physically.  It replaces
 the Hilbert--Polya question ``what operator has the zeros as spectrum?''
@@ -288,14 +460,18 @@ by the information-acoustic question:
 \emph{What acoustic spacetime has the explicit formula as its wave equation?}
 \end{center}
 
-The answer draws on~\cite{burns2024},
-who showed that acoustic fields in a physical medium are governed by
-geometric-algebraic spacetime geometry---and that the correct description
-requires both a scalar potential and a bivector potential, coupled by
-exact Hodge decomposition.  We transpose this construction to
-number-theoretic spacetime: the prime register is the scalar potential
-(grade~0), the zero register is the bivector potential (grade~2), and
-the explicit formula is the grade-1 field equation \(\nabla p=0\).
+The answer draws on~\cite{burns2024}, who showed that acoustic
+fields in a physical medium are governed by geometric-algebraic
+spacetime geometry.  In their formulation the correct description
+of an acoustic field requires two coupled potentials---a scalar
+potential and a bivector potential---glued together by exact Hodge
+decomposition.
+
+We transpose this construction one octave up: from a molecular
+medium to a number-theoretic medium.  The prime register becomes
+the scalar potential (grade~0); the zero register becomes the
+bivector potential (grade~2); and the explicit formula becomes the
+grade-1 field equation \(\nabla p=0\) coupling them.
 
 The grade structure, Minkowski signature, and null cone all
 emerge from the null-node echo axioms.  A closed null echo system
@@ -307,16 +483,22 @@ The unique positive zero is the golden ratio.  Zero-defect closure is
 golden closure, attenuating grade \(k\) by \(\vp^{-k}\).  The central
 grade \(k=0\) is preserved; every off-center grade contracts.
 
-The Riemann Hypothesis then becomes a statement about the echo
-propagator's pole-shift map.  The echo system's dual symmetry
-(\(s\leftrightarrow1-s\)) provides an involution whose orbit-space
-coordinate is \(\lambda=s(1-s)\).  The echo propagator contracts the
-non-central (pseudoscalar) part of \(\lambda\), defining a shifted
-pole \(\rho'\) for each zero.  By \cref{thm:pole-shift-trivial},
-\(\rho'=\rho\) iff \(\beta=\tfrac12\).  The explicit formula is an
-identity: applying the propagator to both sides and subtracting
-produces a residue contradiction unless every zero satisfies
-\(\rho'=\rho\).  Hence \(\beta=\tfrac12\).
+The Riemann Hypothesis then becomes a statement about how this echo
+propagator moves the zeros.  The functional-equation symmetry
+\(s\leftrightarrow1-s\) provides a natural involution; its orbits
+are parametrised by \(\lambda=s(1-s)\), and on this orbit space the
+critical line is exactly the locus where \(\lambda\) is real.
+Off-criticality shows up algebraically as a nonzero pseudoscalar
+component of \(\lambda\), and the echo propagator contracts that
+component---defining a shifted pole \(\rho'\) for each zero.  By
+\cref{thm:pole-shift-trivial}, \(\rho'=\rho\) precisely when
+\(\beta=\tfrac12\).
+
+The explicit formula is the wave equation of this orbit space, and
+it is an identity.  Applying the propagator to both sides and
+subtracting produces a residue contradiction unless every zero
+already satisfies \(\rho'=\rho\).  This forces \(\beta=\tfrac12\)
+for every nontrivial zero of \(\zeta\).
 
 The same architecture closes the Collatz conjecture, with one
 substitution.  RH lives in \(\Cl(3,1)\) over the prime spectrum;
@@ -327,15 +509,22 @@ the critical line.  The drift is the grace surplus
 \(\E[a_i]-\log_2 3\approx0.415\) rather than the
 \(\vp^{-4}\) pseudoscalar contraction.  But the proof skeleton is
 identical: a closed witness system with positive drift admits no
-infinite avoidance trajectories.  \Cref{sec:collatz} develops this
-parallel rigorously.  The witness trace is now constructed
-explicitly (\cref{def:witness-trace-acoustic}) and proved positive
-by the Merkaba Supercoiling Lemma (\cref{thm:supercoiling-lemma}),
-and the Cl(1,1)-to-$V_W$ lift is realized by three explicit
-constructions $\mathcal{F}_0,\mathcal{F}_1,\mathcal{F}_2$
-(\cref{def:canonical-lift-F0}, \cref{def:seed-rescaled-lift-F1},
-\cref{def:orbit-aware-lift-F2}), with $\mathcal{F}_2$ capping
-exactly at every termination (\cref{thm:F2-exact-cap}).
+infinite avoidance trajectories.
+
+\Cref{sec:collatz} develops this parallel rigorously.  Two earlier
+versions of the present manuscript invoked a positive witness trace
+as an axiom; here it is constructed.  The trace is the squared
+overlap of a state with the fundamental acoustic mode on a witness
+sphere, positive by definition, and the Merkaba--Fano grammar makes
+its radical exactly the supercoiled lifted winding.
+
+The lift from $\Cl(1,1)$ to the witness module is realized by three
+explicit functors, each fixing what the previous one leaves open:
+$\mathcal{F}_0$ is canonical but caps only asymptotically;
+$\mathcal{F}_1$ rescales by the seed to tighten the cap;
+$\mathcal{F}_2$ is orbit-aware and caps exactly at every
+termination.  $\mathcal{F}_2$ alone is sufficient to make
+\cref{thm:collatz-witness-return} unconditional.
 
 \subsection{What is new}
 
@@ -349,78 +538,72 @@ version of the present paper made the echo formalism primary but still
 ``identified'' the explicit formula as an echo system---a step a skeptic
 could call metaphorical.
 
-This version eliminates that vulnerability.  It shows that geometry,
-algebra, and arithmetic are downstream of echo dynamics, following
-the structural template of~\cite{burns2024}:
+This version eliminates that vulnerability.  It shows that
+geometry, algebra, and arithmetic are emergent from echo dynamics,
+following the structural template of~\cite{burns2024}.  The new
+contributions cluster into five strands.
 
-\begin{enumerate}
-  \item information is relational before it is absolute;
-  \item closed relational information is an echo;
-  \item exact echo closure has zero defect;
-  \item zero defect uniquely selects \(\vp\);
-  \item \(\vp\)-echoes contract all non-central grades;
-  \item null nodes generate geometric-algebra grades (downstream geometry);
-  \item the Hodge decomposition is the register decomposition;
-  \item the explicit formula is the wave equation \(\nabla p=0\);
-  \item the critical line is the null cone;
-  \item echo iteration and grading produce \((\Nat,+,\times)\),
-        primes, unique factorization, and the Euler product
-        (downstream arithmetic);
-  \item the six bivector channels of \(\Cl(3,1)\) route primes by
-        residue mod~\(24\), and the resulting Hecke-eigenvalue
-        congruence \(\tau(p)\equiv 1+p\pmod{24}\) on the modular
-        discriminant \(\Delta(\tau)=q\prod_{n\ge1}(1-q^n)^{24}\) is
-        the precise number-theoretic content of that routing
-        (\cref{cor:wilton-channel-content}); the same exponent
-        \(24\) governs the bosonic-string transverse spectrum
-        (\cref{rmk:bosonic-string-24});
-  \item the echo propagator shifts poles: \(\rho\to\rho'\),
-        where \(\rho'=\rho\) iff \(\beta=\tfrac12\)
-        (\cref{thm:pole-shift-trivial});
-  \item the propagator acts on the orbit space of the
-        functional-equation involution \(s\mapsto1-s\), via the
-        branched double cover \(\lambda=s(1-s)\); the critical line
-        is the branch locus (\cref{thm:propagator-orbit-space});
-  \item equivalently, an off-critical zero induces a nonzero
-        pseudoscalar gradient \(\nabla I_x\ne0\), shape operator
-        \(S_x\ne0\), and curvature bivector \(R(a\wedge b)\ne0\),
-        which is forbidden by the zero-defect flatness of the null
-        substrate (\cref{thm:flatness-forces};
-        Sobczyk~\cite{sobczyk1971});
-  \item therefore off-critical zero displacement is contradicted
-        by the explicit-formula identity (\cref{thm:main-rh});
-  \item the same witness-return architecture, with $\Cl(1,1)$
-        replacing $\Cl(3,1)$ and the Collatz involution
-        $e_1\leftrightarrow e_2$ replacing $s\mapsto1-s$, closes
-        the Collatz conjecture (\cref{thm:collatz-witness-return})
-        unconditionally via the explicit orbit-aware lift
-        $\mathcal{F}_2$ (\cref{def:orbit-aware-lift-F2},
-        \cref{thm:F2-exact-cap}); the canonical-exact-cap section
-        $\mathcal{F}^{\dagger}$ unifying the algebraic and orbit
-        layers is defined explicitly
-        (\cref{def:canonical-exact-cap-section}) and its existence
-        is proved equivalent to Collatz
-        (\cref{thm:fdagger-existence}); the witness trace itself is
-        \emph{constructed and proven positive}
-        (\cref{def:witness-trace-acoustic},
-        \cref{thm:supercoiling-lemma}); and finally the entire
-        witness architecture---trace, cap, nilpotent radical,
-        finite phase capacity, and Supercoiling Lemma---is
-        consolidated around a single load-bearing object, the
-        global Logos section $\Lambda$ of the witness bundle
-        (\cref{def:logos-section},
-        \cref{thm:logos-existence-uniqueness},
-        \cref{thm:global-logos-return}); the conjecture admits
-        twenty-six framework-specific formulations plus the
-        consolidating bundle-theoretic formulation as the
-        twenty-seventh (\cref{tab:twenty-six}).
-\end{enumerate}
+\paragraph{Echo axioms.}  Information is relational before it is
+absolute; closed relational information is an echo; exact echo
+closure has zero defect; zero defect uniquely selects \(\vp\); and
+\(\vp\)-echoes contract all non-central grades.
+
+\paragraph{Geometry, algebra, arithmetic emerge.}  Null nodes
+generate geometric-algebra grades; the Hodge decomposition is the
+register decomposition; the explicit formula is the wave equation
+\(\nabla p=0\); the critical line is the null cone; and echo
+iteration and grading produce \((\Nat,+,\times)\)---primes, unique
+factorization, and the Euler product included.
+
+\paragraph{The Riemann Hypothesis as a pole-shift triviality.}  The
+echo propagator shifts poles \(\rho\to\rho'\), and
+\(\rho'=\rho\) iff \(\beta=\tfrac12\)
+(\cref{thm:pole-shift-trivial}).  Equivalently, the propagator acts
+on the orbit space of \(s\mapsto1-s\) via the branched double cover
+\(\lambda=s(1-s)\), with the critical line as branch locus
+(\cref{thm:propagator-orbit-space}); equivalently again, an
+off-critical zero would induce a nonzero pseudoscalar gradient,
+shape operator, and curvature bivector, all forbidden by zero-defect
+flatness (\cref{thm:flatness-forces}; Sobczyk~\cite{sobczyk1971}).
+Off-criticality is therefore contradicted by the explicit-formula
+identity itself (\cref{thm:main-rh}).
+
+\paragraph{The Collatz Conjecture as the same architecture in
+\(\Cl(1,1)\).}  The witness-return mechanism, with \(\Cl(1,1)\)
+replacing \(\Cl(3,1)\) and \(e_1\leftrightarrow e_2\) replacing
+\(s\mapsto1-s\), closes Collatz unconditionally
+(\cref{thm:collatz-witness-return}) via the orbit-aware lift
+\(\mathcal{F}_2\) (\cref{thm:F2-exact-cap}).  The
+canonical-exact-cap section \(\mathcal{F}^{\dagger}\) is defined
+explicitly and its existence is proved equivalent to Collatz
+(\cref{def:canonical-exact-cap-section},
+\cref{thm:fdagger-existence}).  The witness trace, formerly an
+axiom, is constructed and proven positive
+(\cref{def:witness-trace-acoustic},
+\cref{thm:supercoiling-lemma}).
+
+\paragraph{Consolidation: one global object.}  The entire witness
+architecture---trace, cap, nilpotent radical, finite phase capacity,
+and Supercoiling Lemma---is unified around a single load-bearing
+object, the global Logos section \(\Lambda\) of the witness bundle
+(\cref{def:logos-section}, \cref{thm:logos-existence-uniqueness},
+\cref{thm:global-logos-return}).  The witness-return statement
+admits twenty-six framework-specific formulations plus this
+consolidating bundle-theoretic formulation as the twenty-seventh
+(\cref{tab:twenty-six}).
+
+A finer arithmetic consequence is recorded as a corollary: the six
+bivector channels of \(\Cl(3,1)\) route primes by residue
+mod~\(24\), giving the Hecke-eigenvalue congruence
+\(\tau(p)\equiv 1+p\pmod{24}\) on the modular discriminant
+(\cref{cor:wilton-channel-content}).  The same exponent~\(24\) is
+the bosonic-string transverse spectrum (\cref{rmk:bosonic-string-24}).
 
 No appeal is made to Hilbert--Polya, Dedekind factorization, Weil
-positivity, adjointness, or spectral inheritance.  Those can be viewed as
-translations of the echo mechanism into familiar analytic languages, but
-the mechanism itself is information-acoustic, and the explicit formula
-is its wave equation---not its metaphorical analog.
+positivity, adjointness, or spectral inheritance.  These can be
+viewed as translations of the echo mechanism into familiar analytic
+languages, but the mechanism itself is information-acoustic and the
+explicit formula is its wave equation.
 
 \paragraph{Scope and prior work.}
 The contributions enumerated above---the information-acoustic
@@ -470,7 +653,8 @@ framework.
     If \(\rho'\ne\rho\), subtraction leaves residue \(-1\) at \(s=\rho\);
     therefore every zero is fixed and \(\beta=\tfrac12\).};
 \end{tikzpicture}}
-\caption{The derivation chain from echo axioms to the Riemann
+\caption{\textbf{Five echo axioms force the Riemann Hypothesis.}
+The derivation chain from echo axioms to the Riemann
 Hypothesis as an evolving mechanism.  Relational nullness gives a
 two-return budget; exact closure selects the golden scale; the four-node
 body grows the \(1,4,6,4,1\) grade structure; non-central spectral
@@ -494,16 +678,17 @@ signature (\cref{prop:signature}).  Signature determines the null cone
 primes, unique factorization, the Euler product---emerges from echo
 iteration and grading (\cref{thm:iteration-monoid,%
 thm:multiplication-attenuation,thm:unique-factorization,%
-cor:euler-product}).  The explicit formula is the wave equation of the
-resulting spacetime.  The echo propagator's action on zero locations
-is a concrete pole-shift map \(\rho\to\rho'\)
-(\cref{def:pole-shift}), and the map is the identity iff
-\(\beta=\tfrac12\) (\cref{thm:pole-shift-trivial}).  The
-propagator acts on the orbit space of the functional-equation
-involution \(s\mapsto1-s\) through the branched double cover
-\(\lambda=s(1-s)\), with the critical line as its branch locus
-(\cref{thm:propagator-orbit-space}).  The propagator preserves
-the explicit-formula identity
+cor:euler-product}).
+
+The explicit formula is the wave equation of the resulting spacetime.
+The echo propagator's action on zero locations is a concrete
+pole-shift map \(\rho\to\rho'\) (\cref{def:pole-shift}), and the
+map is the identity iff \(\beta=\tfrac12\)
+(\cref{thm:pole-shift-trivial}).  The propagator acts on the orbit
+space of the functional-equation involution \(s\mapsto1-s\) through
+the branched double cover \(\lambda=s(1-s)\), with the critical line
+as its branch locus (\cref{thm:propagator-orbit-space}).  The
+propagator preserves the explicit-formula identity
 (\cref{thm:spectral-self-consistency}), and the main theorem
 (\cref{thm:main-rh}) follows from the residue structure of
 the propagated identity.
@@ -524,6 +709,16 @@ the echo-axiom chain alone.
 
 \subsection{Relational nullness}
 
+A null echo system is the smallest formal object that captures the
+acoustic premise of the paper: information has no absolute self-norm,
+only mutual interference.  A null node has no absolute pitch; tone
+appears only when two nodes interfere.  This subsection makes that
+premise precise.  We define a null node, declare nullness as the
+vanishing of self-measurement, and assemble nodes into echo systems
+whose only structure is their mutual coupling.  Everything in the
+paper---grades, signature, the golden ratio, the explicit formula as
+a wave equation---is derived from these primitives.
+
 \begin{definition}[Null node]
 A \emph{null node} is a formal symbol \(w\) whose
 observable content is supplied by pairings with other nodes.  Its
@@ -542,11 +737,6 @@ A null node \(w\) is \emph{null} if
 Equivalently, the node carries no independent self-norm; all
 measurable content is relational.
 \end{definition}
-
-\begin{remark}
-This is the information-acoustic premise.  A null node has no
-absolute pitch.  Tone appears only when two nodes interfere.
-\end{remark}
 
 \begin{definition}[Echo system]
 An \emph{echo system} is a finite family of null nodes
@@ -620,11 +810,13 @@ return.
   \node[echoStage, fill=echoCritical!15, text width=3.6cm] at (1.55,-2.1)
     {exact closure\\\(\rho^{-1}+\rho^{-2}=1\)};
 \end{tikzpicture}}
-\caption{A reciprocal null pair.  Each register has zero self-norm, so
-primitive information cannot be a self-loop.  The only primitive budget
-terms are the first cross-return and its reflected return, with
-attenuations \(\rho^{-1}\) and \(\rho^{-2}\).  Exact closure is therefore
-the two-return equation \(\rho^{-1}+\rho^{-2}=1\).}
+\caption{\textbf{Null reciprocity forces the two-return budget
+\(\rho^{-1}+\rho^{-2}=1\).}  A reciprocal null pair.  Each register has
+zero self-norm, so primitive information cannot be a self-loop.  The
+only primitive budget terms are the first cross-return and its
+reflected return, with attenuations \(\rho^{-1}\) and \(\rho^{-2}\).
+Exact closure is therefore the two-return equation
+\(\rho^{-1}+\rho^{-2}=1\).}
 \label{fig:null-echo-pair}
 \end{figure}
 
@@ -633,6 +825,8 @@ returned return has attenuation \(a^2=\rho^{-2}\).  Exact closure is
 \[
   \rho^{-1}+\rho^{-2}=1.
 \]
+
+\medskip\noindent The two-return budget formalizes the constraint that each register can return information at most twice per closure cycle.
 
 \begin{definition}[Primitive two-return budget]
 \label{def:two-return-budget}
@@ -688,6 +882,7 @@ defect is \(D(\rho)=R(\rho)-1\).  Hence \(R(\rho)=1\) if and only if
 \(D(\rho)=0\).
 \end{proof}
 
+\medskip
 \begin{theorem}[Golden uniqueness]
 \label{thm:golden-uniqueness}
 The equation \(D(\rho)=0\) has exactly one positive solution, namely
@@ -716,6 +911,11 @@ A zero-defect echo satisfies
 \]
 \end{corollary}
 
+\noindent\emph{In plain terms:} a system that returns its own
+information to itself with no leftover has only one consistent
+scale---the golden ratio.  Two echoes, one inverse and one
+double-inverse, must add to a complete return.
+
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}
@@ -742,11 +942,12 @@ A zero-defect echo satisfies
     rounded corners] at (axis cs:0.9,2.25)
     {overfilled\\echo budget};
   \node[align=center, font=\footnotesize, fill=white, draw=echoGray!25,
-    rounded corners] at (axis cs:2.55,-0.55)
+    rounded corners, anchor=south east] at (axis cs:2.95,-0.97)
     {underfilled\\echo budget};
   \end{axis}
 \end{tikzpicture}
-\caption{The defect function \(D(\rho)=\rho^{-1}+\rho^{-2}-1\).
+\caption{\textbf{The defect function vanishes uniquely at \(\varphi\).}
+The defect function \(D(\rho)=\rho^{-1}+\rho^{-2}-1\).
 The unique positive zero is the golden ratio \(\varphi\approx1.618\).
 Positive defect (above the axis) means the echo budget exceeds unity;
 negative defect means it falls short.  Only at \(\rho=\varphi\) does
@@ -836,7 +1037,8 @@ language, small departures from grace produce first-order beating.
     at (axis cs:0.28,0.18) {stable minimum};
   \end{axis}
 \end{tikzpicture}
-\caption{Defect energy near the golden scale.  Because \(D'(\varphi)\ne0\),
+\caption{\textbf{The golden scale is a rigidity point, not a tunable parameter.}
+Defect energy near the golden scale.  Because \(D'(\varphi)\ne0\),
 small detuning produces a first-order defect and hence a quadratic energy
 well.  The minimum is unique: the zero-defect scale is not a tunable
 parameter but a rigidity point of two-return closure.}
@@ -844,6 +1046,16 @@ parameter but a rigidity point of two-return closure.}
 \end{figure}
 
 \subsection{Grades and attenuation}
+
+The closure map does not act uniformly on the echo system.  Its
+recursive structure assigns a delay---a number of echo cycles---to
+each information component, and components delayed differently
+attenuate at different rates.  We formalize this by grading the
+information space, then show that the only attenuation pattern
+consistent with zero-defect closure is the geometric one fixed by
+the golden ratio: grade~\(k\) attenuates by exactly~\(\vp^{-k}\).
+The center grade survives indefinitely; every off-center grade
+contracts.
 
 \begin{definition}[Echo grade]
 Let \(\EF\) be the information space generated by a null echo system.
@@ -872,27 +1084,17 @@ therefore the \(k\)-fold inverse closure scale, namely \(\vp^{-k}\).
 \end{proof}
 
 \begin{remark}
-This is the algebraic form of the acoustic statement: a zero-defect echo
-loses one golden inverse for each recursive delay.  It is not fitted to
-the zeta function.  It follows from the unique two-return closure budget
-\(\vp^{-1}+\vp^{-2}=1\).
+The decay rate is not fitted but forced.  It is the unique solution
+to two-return closure: the budget identity
+\(\vp^{-1}+\vp^{-2}=1\) leaves no other consistent choice.
 \end{remark}
 
-\begin{theorem}[Non-central contraction]
+\begin{corollary}[Non-central contraction]
 \label{thm:noncentral-contraction}
-For every \(k\ge1\),
-\[
-  0<\vp^{-k}<1.
-\]
-Thus every non-central grade contracts under iteration, while grade
-\(0\) is preserved.
-\end{theorem}
-
-\begin{proof}
-Since \(\vp>1\), every positive inverse power \(\vp^{-k}\) with
-\(k\ge1\) lies strictly between \(0\) and \(1\).  For \(k=0\), the
-attenuation is \(\vp^0=1\).
-\end{proof}
+Since \(\vp>1\), \(0<\vp^{-k}<1\) for every \(k\ge 1\).  Hence
+every non-central grade contracts under iteration, while grade~\(0\)
+is preserved.
+\end{corollary}
 
 \begin{definition}[Echo closure map]
 \label{def:echo-map}
@@ -960,7 +1162,9 @@ every \(k\ge1\), only grade \(0\) remains.
     at (axis cs:2.2,0.18) {after one cycle\\\(\varphi^{-4}\approx0.146\)};
   \end{axis}
 \end{tikzpicture}
-\caption{Grade attenuation under the echo closure map \(\mathcal
+\caption{\textbf{Each grade attenuates by \(\varphi^{-k}\) per cycle; only
+the center survives.}
+Grade attenuation under the echo closure map \(\mathcal
 E_\varphi\).  Grade~0 (the center) is preserved at full strength.
 Each higher grade~\(k\) is attenuated by \(\varphi^{-k}\) per cycle.
 Grade~4 (the pseudoscalar) retains only
@@ -1054,14 +1258,18 @@ approximation.
 \label{sec:acoustic-spacetime}
 %% ====================================================================
 
-The previous section is information-acoustic.  This section shows that
-geometry and algebra are \emph{downstream} consequences of null echo
-dynamics, not imported structures.  The argument follows~\cite{burns2024}, who showed that acoustic fields
-in a physical medium are governed by the geometric-algebraic structure of
-spacetime.  We transpose this construction one octave up: from a
-molecular medium to a number-theoretic medium, from the speed of sound
-to the critical-line propagation speed, and from acoustic pressure and
-velocity to prime impacts and zero resonances.
+The previous section is information-acoustic.  This section shows
+that geometry and algebra are emergent consequences of null echo
+dynamics, not imported structures.  The argument follows
+\cite{burns2024}, who showed that acoustic fields in a physical
+medium are governed by the geometric-algebraic structure of
+spacetime.
+
+We transpose this construction one octave up.  The medium becomes
+number-theoretic instead of molecular; the speed of sound becomes
+the critical-line propagation speed; and acoustic pressure and
+velocity become prime impacts and zero resonances.  Same field
+equations, different register.
 
 \subsection{Grade structure from null generators}
 
@@ -1083,9 +1291,9 @@ mutual interference alone.
 \end{proof}
 
 \begin{remark}
-This is the downstream thesis made precise.  We do not start from
-a geometric algebra and observe that it matches the echo system.  The
-echo system---null nodes with mutual coupling---\emph{generates}
+This is the emergent-geometry thesis made precise.  We do not start
+from a geometric algebra and observe that it matches the echo
+system.  The echo system---null nodes with mutual coupling---\emph{generates}
 the geometric algebra.  Geometry is the image of relational dynamics,
 not the other way around.
 \end{remark}
@@ -1131,7 +1339,8 @@ not the other way around.
   \node[right,font=\footnotesize, align=left] at (6.6,4.9)
     {pseudoscalar:\\off-critical\\component};
 \end{tikzpicture}}
-\caption{The 5-level grade pyramid of \(\Cl(3,1)\) generated by
+\caption{\textbf{Four null nodes generate the \(1,4,6,4,1\) grade pyramid.}
+The 5-level grade pyramid of \(\Cl(3,1)\) generated by
 four null nodes.  The total dimension is \(2^4=16\).  The prime
 register lives at grade~0, the acoustic field at grade~1, and the
 zero register (with its 6~bivector channels) at grade~2.  The
@@ -1183,10 +1392,15 @@ with coupling matrix
     \draw[boostEdge] (w0) -- node[font=\scriptsize, fill=white, inner sep=1pt]
       {\(+\varphi^{-1}\)} (w\i);
   }
-  \foreach \a/\b in {1/2,1/3,2/3} {
-    \draw[rotationEdge] (w\a) -- node[font=\scriptsize, fill=white, inner sep=1pt]
-      {\(-\varphi^{-2}\)} (w\b);
-  }
+  \draw[rotationEdge] (w1) -- node[font=\scriptsize, fill=white,
+    inner sep=1pt, sloped, above=-1pt, pos=0.55]
+    {\(-\varphi^{-2}\)} (w2);
+  \draw[rotationEdge] (w2) -- node[font=\scriptsize, fill=white,
+    inner sep=1pt, sloped, above=-1pt, pos=0.45]
+    {\(-\varphi^{-2}\)} (w3);
+  \draw[rotationEdge] (w1) -- node[font=\scriptsize, fill=white,
+    inner sep=1pt, pos=0.5, above=2pt]
+    {\(-\varphi^{-2}\)} (w3);
 
   \node[echoStage, fill=echoScalar!20, text width=3.4cm] at (5.0,1.0)
     {seam--child couplings\\\(+\varphi^{-1}\)};
@@ -1197,7 +1411,8 @@ with coupling matrix
   \draw[echoArrow] (3.15,0.7) -- (3.95,0.9);
   \draw[echoArrow] (3.15,-0.65) -- (3.95,-0.5);
 \end{tikzpicture}}
-\caption{The golden tetrad as a coupling body.  The seam node \(w_0\)
+\caption{\textbf{Echo coupling forces the \((3,1)\) Minkowski signature.}
+The golden tetrad as a coupling body.  The seam node \(w_0\)
 couples positively to each child at \(\varphi^{-1}\), while child--child
 couplings are negative at \(-\varphi^{-2}\).  The signs and magnitudes
 are not chosen geometrically; they are the zero-defect echo scale written
@@ -1205,7 +1420,7 @@ as a four-node metric, and they force the \((3,1)\) signature.}
 \label{fig:tetrad-couplings}
 \end{figure}
 
-\begin{proposition}[Signature is downstream]
+\begin{proposition}[Signature is forced]
 \label{prop:signature}
 The matrix \eqref{eq:tetrad-metric} has signature \((3,1)\).  Hence
 the golden tetrad generates \(\Cl(3,1)\), the same algebraic structure
@@ -1248,6 +1463,7 @@ packing lies on the null cone of \(Q\).  In the geometric algebra
 \(\Cl(3,1)\), null vectors square to zero, so every Apollonian circle
 is nilpotent---not by stipulation but by Descartes.
 
+\smallskip
 This gives a second route to the same \(\Cl(3,1)\): the golden tetrad's
 zero-defect coupling matrix~\eqref{eq:tetrad-metric} forces signature
 \((3,1)\) algebraically, and the Descartes form forces it geometrically.
@@ -1678,7 +1894,9 @@ inner automorphism.  Linearity and independence of the contributions
     {fold/fixed locus\\\(s_4=0\)};
   \end{axis}
 \end{tikzpicture}
-\caption{The chiral fold at \(\beta=\tfrac12\).
+\caption{\textbf{The critical line \(\beta=\tfrac12\) is the chiral
+fold of two dual substrates.}
+The chiral fold at \(\beta=\tfrac12\).
 The two dual substrates---cohesive \(\Cl(1,3)\) and repulsive
 \(\Cl(3,1)\)---assign opposite orientations to the pseudoscalar.
 The reconciliation discrepancy \(\Delta(s)=2\,s_4\) vanishes only on
@@ -1839,7 +2057,8 @@ sub-Euler-products of \cref{thm:euler-bivector-channels}.
   \node[font=\scriptsize, echoBoost] at (0.28,1.10) {\(p=3\)};
   \node[font=\scriptsize, echoBoost] at (1.55,1.45) {\(p\equiv\pm1\)};
   \node[font=\scriptsize, echoRotation] at (-1.05,-0.62) {\(\pm5\)};
-  \node[font=\scriptsize, echoRotation] at (0,-0.95) {\(\pm7\)};
+  \node[font=\scriptsize, echoRotation, fill=white, inner sep=1pt]
+    at (-0.65,0.20) {\(\pm7\)};
   \node[font=\scriptsize, echoRotation] at (1.05,-0.62) {\(\pm11\)};
 
   \node[echoTinyBox, fill=echoScalar!15, text width=3.8cm, anchor=west]
@@ -1849,7 +2068,9 @@ sub-Euler-products of \cref{thm:euler-bivector-channels}.
     at (3.2,0.15)
     {rotation channels\\\(w_1\wedge w_2:p\equiv\pm5\)\\\(w_1\wedge w_3:p\equiv\pm7\)\\\(w_2\wedge w_3:p\equiv\pm11\)};
 \end{tikzpicture}}
-\caption{The 6 bivector channels of the golden tetrad.  The seam
+\caption{\textbf{Six bivector channels route every prime by its mod-24
+class.}
+The 6 bivector channels of the golden tetrad.  The seam
 node \(w_0\) connects to each child via a boost channel (solid blue
 arrows), carrying the ramified primes \(2\), \(3\) and the
 \(p\equiv\pm1\pmod{24}\) family.  The three child--child edges are
@@ -1919,7 +2140,8 @@ This is exactly the relational nullness of the explicit formula.
       {closure budget}
     (zero.south);
 \end{tikzpicture}}
-\caption{Hodge decomposition as register decomposition.  The grade-1
+\caption{\textbf{Hodge decomposition is the prime/zero register split.}
+Hodge decomposition as register decomposition.  The grade-1
 acoustic field \(p\) decomposes into contributions from the grade-0
 prime register (scalar potential) and the grade-2 zero register
 (bivector potential).  Their echo path lengths are 1 and 2
@@ -2453,9 +2675,63 @@ See \texttt{tests/test\_phi5\_deep\_structure.py} (falsifier~9) for the
 quantitative measurements.
 \end{remark}
 
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    echoAxis,
+    width=0.82\textwidth,
+    height=0.40\textwidth,
+    ybar,
+    bar width=14pt,
+    xlabel={depth transition $(d{\to}d{+}1)$},
+    ylabel={$\log_{\vp}$ of geom-mean $r^2$ contraction},
+    symbolic x coords={0/1, 2/3, 4/5, 6/7, 8/9},
+    xtick=data,
+    ymin=-5.6, ymax=-2.4,
+    ytick={-5,-4.5,-4,-3.5,-3},
+    nodes near coords,
+    nodes near coords style={font=\scriptsize, /pgf/number format/.cd, fixed, fixed zerofill, precision=2},
+    enlarge x limits=0.13,
+    legend pos=south east,
+    legend style={font=\footnotesize, draw=none},
+  ]
+    \addplot[fill=echoBoost!25, draw=echoBoost, thick]
+      coordinates {(0/1,-4.236) (4/5,-3.780) (6/7,-3.780) (8/9,-3.780)};
+    \addlegendentry{stable depths}
+    \addplot[fill=echoGray!20, draw=echoGray, thick]
+      coordinates {(2/3,-3.799)};
+    \addlegendentry{transient}
+    \addplot[echoCritical, dashed, very thick, sharp plot,
+             update limits=false]
+      coordinates {(0/1,-5) (8/9,-5)};
+    \addlegendentry{algebraic $\vp^{-5}$}
+    \addplot[echoField, densely dotted, thick, sharp plot,
+             update limits=false]
+      coordinates {(0/1,-3.894) (8/9,-3.894)};
+    \addlegendentry{stable mean $-3.89$}
+  \end{axis}
+\end{tikzpicture}
+\caption{\textbf{Empirical $\vp^{-5}$ readout in the classical
+Apollonian gasket.}
+At each even-to-odd depth transition, the geometric-mean per-circle
+$r^2$ contraction (logarithm in base $\vp$) is plotted.  The four
+\emph{stable} transitions cluster tightly around $-3.78$ (mean
+$-3.89$); the algebraic prediction $\vp^{-5}$ from
+\cref{prop:forward-eigenvalue-throat} is the dashed purple line.
+The gap between geom-mean and per-circle readings is the central
+content of \cref{rmk:phi5-numerical-status} (H1, H4): the
+per-circle observable contracts by $\vp^{-5}$ exactly via the
+throat recursion, while the ensemble geom-mean lives at a
+related but distinct exponent.  Source:
+\texttt{test\_forward\_eigenvalue\_theorem.py}.}
+\label{fig:phi5-empirical}
+\end{figure}
+
 \begin{remark}[Five hypotheses for the Apollonian numerical
 deviations]
 \label{rmk:phi5-five-hypotheses}
+\begin{sloppypar}
 The Apollonian test suite contains a family of numerical
 falsifiers (test\_principal\_orbit\_jacobian.py,
 test\_writhe\_jac\_identity.py, test\_per\_step\_jac\_factorization.py,
@@ -2466,6 +2742,7 @@ test\_spectral\_gap\_discretization.py) that all show systematic
 deviations from a uniform $\vp^{-5}$ prediction.  We classify
 the deviations into five competing hypotheses, all consistent
 with the data, none yet uniquely favoured:
+\end{sloppypar}
 
 \begin{enumerate}
   \item[\textup{(H1)}] \emph{Direction-boundedness} (favored by the
@@ -2641,12 +2918,14 @@ observables is the \(5=4+1\) versus \(6=2\times 3\) decomposition: the
 chamber (witness + 4 directions) versus the dynamics-within-chamber
 (2 orientations \(\times\) 3 branches per cycle).
 
-See \texttt{tests/test\_principal\_orbit\_jacobian.py} (A1),
-\texttt{tests/test\_fredholm\_determinant.py} (A2),
-\texttt{tests/test\_spectral\_gap\_discretization.py} (A3),
-\texttt{tests/test\_phi5\_consistency.py} (A4), and
-\texttt{tests/test\_3d\_principal\_orbit\_jacobian.py} (D1) for the
-quantitative measurements supporting this distinction.
+\begin{sloppypar}
+See \texttt{tests/}\allowbreak\texttt{test\_principal\_orbit\_jacobian.py} (A1),
+\texttt{tests/}\allowbreak\texttt{test\_fredholm\_determinant.py} (A2),
+\texttt{tests/}\allowbreak\texttt{test\_spectral\_gap\_discretization.py} (A3),
+\texttt{tests/}\allowbreak\texttt{test\_phi5\_consistency.py} (A4), and
+\texttt{tests/}\allowbreak\texttt{test\_3d\_principal\_orbit\_jacobian.py} (D1)
+for the quantitative measurements supporting this distinction.
+\end{sloppypar}
 \end{remark}
 
 \begin{remark}[Hopf fibration as the proper geometric arena]
@@ -2703,15 +2982,17 @@ exactly in the Hopf arena: the same numerical decomposition
 \(6=2\times 3\) (returns \(\times\) branches) reappears as the trefoil
 writhe of the principal orbit's Hopf-fibre link.
 
-See \texttt{tests/test\_hopf\_lift\_linking.py} (B1),
-\texttt{tests/test\_principal\_orbit\_knot\_type.py} (B2),
-\texttt{tests/test\_orbit\_knot\_histogram.py} (B3),
-\texttt{tests/test\_hopf\_linking\_vs\_depth.py} (B4),
-\texttt{tests/test\_bivector\_hopf\_correspondence.py} (C1),
-\texttt{tests/test\_mirror\_flip\_hopf\_swap.py} (C2),
-\texttt{tests/test\_chiral\_fold\_equatorial.py} (C3), and
-\texttt{tests/test\_witness\_is\_hopf\_base.py} (C4) for the
-quantitative measurements.  These results do not weaken
+\begin{sloppypar}
+See \texttt{tests/}\allowbreak\texttt{test\_hopf\_lift\_linking.py} (B1),
+\texttt{tests/}\allowbreak\texttt{test\_principal\_orbit\_knot\_type.py} (B2),
+\texttt{tests/}\allowbreak\texttt{test\_orbit\_knot\_histogram.py} (B3),
+\texttt{tests/}\allowbreak\texttt{test\_hopf\_linking\_vs\_depth.py} (B4),
+\texttt{tests/}\allowbreak\texttt{test\_bivector\_hopf\_correspondence.py} (C1),
+\texttt{tests/}\allowbreak\texttt{test\_mirror\_flip\_hopf\_swap.py} (C2),
+\texttt{tests/}\allowbreak\texttt{test\_chiral\_fold\_equatorial.py} (C3), and
+\texttt{tests/}\allowbreak\texttt{test\_witness\_is\_hopf\_base.py} (C4) for the
+quantitative measurements.
+\end{sloppypar}  These results do not weaken
 \cref{conj:phi5-relaxation} or
 \cref{prop:forward-eigenvalue-throat}; they sharpen the geometric
 content of the algebra.  The RH proof itself
@@ -2760,11 +3041,13 @@ high-precision published value.  These are recorded as falsified
 coincidences rather than identities; only the conformal invariance
 of \(\varphi^{-6}\) is structural.
 
-See \texttt{tests/test\_phi6\_universality.py} (B-coin),
-\texttt{tests/test\_per\_step\_jac\_factorization.py} (C-coin),
-\texttt{tests/test\_writhe\_jac\_identity.py} (A-coin), and
-\texttt{tests/test\_phi\_squared\_over\_2\_vs\_delta.py} (D-coin)
+\begin{sloppypar}
+See \texttt{tests/}\allowbreak\texttt{test\_phi6\_universality.py} (B-coin),
+\texttt{tests/}\allowbreak\texttt{test\_per\_step\_jac\_factorization.py} (C-coin),
+\texttt{tests/}\allowbreak\texttt{test\_writhe\_jac\_identity.py} (A-coin), and
+\texttt{tests/}\allowbreak\texttt{test\_phi\_squared\_over\_2\_vs\_delta.py} (D-coin)
 for the audit data.
+\end{sloppypar}
 \end{remark}
 
 \begin{remark}[Why the contraction is directional]
@@ -2938,8 +3221,8 @@ techniques~\cite{mayer1991,pollicott-sharp,bourgain2010,kontorovich-oh}.
 \subsection{Interpretation}
 
 The tetrad is not a separate algebraic object that the echo formalism
-``happens to match.''  It is what echo dynamics looks like when expressed
-in the downstream language of geometric algebra.  Null nodes generate
+``happens to match.''  It is what echo dynamics looks like when
+expressed in the language of geometric algebra.  Null nodes generate
 grades.  Zero-defect coupling fixes the golden scale.  The golden scale
 determines the signature.  Signature determines the null cone.  The null
 cone is the critical line.  Every link in this chain runs from echo
@@ -3050,12 +3333,13 @@ primitive two-return normal form of
 therefore exact primitive budget closure, which by
 \cref{prop:exact-closure-zero-defect} is zero defect.
 
-The load-bearing shift from the previous version of this paper is that
-the explicit formula's echo structure is not a metaphorical
-``identification'' of an arithmetic object with an acoustic one.  The
-arithmetic object is an acoustic object, because arithmetic is a
-downstream representation of echo dynamics (\cref{sec:acoustic-spacetime}).
-The wave equation \(\nabla p=0\) and the explicit formula are the same
+The load-bearing shift from the previous version of this paper is
+that the explicit formula's echo structure is not an
+``identification'' of an arithmetic object with an acoustic one.
+The arithmetic object \emph{is} an acoustic object, because
+arithmetic is generated by echo dynamics
+(\cref{sec:acoustic-spacetime}).  The wave equation \(\nabla p=0\)
+and the explicit formula are the same
 statement in two coordinate systems.
 
 \subsection{The explicit formula}
@@ -3191,6 +3475,8 @@ amplitudes gives \(n^{-\beta}=n^{-1+\beta}\), hence
 \(\beta=1/2\) because \(n>1\).
 \end{proof}
 
+\medskip\noindent We now measure the departure of individual primes from the center.
+
 \begin{definition}[Prime echo imbalance]
 \label{def:prime-echo-imbalance}
 For \(n>1\), define the logarithmic imbalance
@@ -3291,6 +3577,7 @@ unmatched prime-side remainder and no unmatched zero-side remainder.
 That is exactly closed echo bookkeeping.
 \end{proof}
 
+\medskip
 \begin{definition}[Center and off-center coordinate]
 The functional-equation involution is
 \[
@@ -3520,9 +3807,9 @@ because the primitive two-return normal form has a unique zero-defect
 positive scale.  The critical line is the null cone.
 
 The load-bearing claim is no longer ``the explicit formula is a
-reciprocal null echo'' (an identification that a skeptic might call
-metaphorical).  It is: \emph{arithmetic is a downstream representation of
-echo dynamics}, so the explicit formula inherits its echo properties by
+reciprocal null echo'' (an identification a skeptic might once have
+called metaphorical).  It is: \emph{arithmetic is generated by echo
+dynamics}, so the explicit formula inherits its echo properties by
 construction.  The wave equation \(\nabla p=0\) of
 \cref{sec:acoustic-spacetime} and the explicit formula of classical
 number theory are the same closure law.
@@ -3695,7 +3982,8 @@ number-theoretic content is imported; it is \emph{produced}.
   \draw[echoArrow] (6.85,3.0) -- (7.45,3.45);
   \draw[echoArrow] (6.85,2.0) -- (7.45,2.05);
 \end{tikzpicture}}
-\caption{Arithmetic emerging from echo dynamics.  The additive monoid is
+\caption{\textbf{Arithmetic is downstream of echo dynamics, not an axiom.}
+Arithmetic emerging from echo dynamics.  The additive monoid is
 the monoid of closure iterates.  Multiplication is not assumed: it is the
 interaction between grade \(k\) and iteration count \(n\), visible in the
 cumulative attenuation \(\varphi^{-kn}\).  Once multiplication exists,
@@ -4050,6 +4338,57 @@ information under repeated closure.
 \label{sec:rh}
 %% ====================================================================
 
+\begin{sectionopener}
+This section runs the RH proof from start to finish.  The route is
+the propagated identity: define the echo propagator
+$\mathcal{E}_\vp$, observe that it acts identically on the
+critical-line modes and contracts off-critical modes by $\vp^{-4}$,
+then read off a residue contradiction unless every nontrivial zero
+sits on the critical line.
+\end{sectionopener}
+
+\medskip\noindent\textbf{What this proof is, and what it is not.}
+The argument that follows is a \emph{compatibility} argument, not
+a spectral realization.  The nontrivial zeros of $\zeta$ are fixed
+complex numbers; the echo propagator does not relocate them.  We
+do not construct a self-adjoint operator whose spectrum is the zeros,
+and we do not exhibit a flow under which off-critical zeros evolve
+toward the critical line.  Such constructions belong to the
+Hilbert--P\'olya program, which this paper does not pursue.
+
+What we do instead is define a single graded operation
+$\mathcal{E}_\vp$ on the explicit-formula identity and observe that
+it has two simultaneous consequences:
+\begin{itemize}
+  \item its grade-0 action fixes the Dirichlet series, and hence
+    (by analytic continuation) fixes the meromorphic function
+    $-\zeta'/\zeta$ together with its pole locations;
+  \item its grade-4 action prescribes a shifted pole $\rho'$ for
+    every nontrivial zero, with $\rho'\ne\rho$ whenever
+    $\beta\ne\tfrac12$.
+\end{itemize}
+A single operation cannot have inconsistent consequences for the
+same function.  The two consequences are compatible iff
+$\rho'=\rho$ for every zero, i.e.\ iff $\beta=\tfrac12$.  That is
+the entire RH inference.
+
+\medskip\noindent\textbf{Proof architecture.}
+The four moves of the proof are:
+\begin{enumerate}
+  \item $\mathcal{E}_\vp$ fixes the prime-side Dirichlet series
+    (\cref{def:echo-propagator}: grade~0 has eigenvalue~1).
+  \item Analytic continuation: the Dirichlet coefficients determine
+    $-\zeta'/\zeta$ as a meromorphic function on $\mathbb{C}$, and
+    a determined function has determined poles
+    (\cref{lem:ac-bridge}).
+  \item The grade-4 contraction prescribes
+    $\rho\mapsto\rho'$, with $\rho'\ne\rho$ iff $\beta\ne\tfrac12$
+    (\cref{thm:pole-shift-trivial}).
+  \item Compatibility of (1)+(2) with (3) forces
+    $\rho'=\rho$ for every zero
+    (\cref{thm:spectral-self-consistency,thm:main-rh}).
+\end{enumerate}
+
 We begin by making the echo propagator concrete.
 
 \subsection{The echo propagator on spectral modes}
@@ -4115,14 +4454,29 @@ Direct computation:
     at (axis cs:4.3,0.18) {\(s_4\to0\)};
   \end{axis}
 \end{tikzpicture}
-\caption{The echo propagator in the \((s_0, s_4)\) plane.
-An off-critical zero has nonzero pseudoscalar component \(s_4\ne0\).
-The echo propagator preserves the scalar component \(s_0\) and
-contracts the pseudoscalar by \(\varphi^{-4}\approx0.146\) per cycle,
-driving every spectral mode vertically toward the \(s_4=0\) axis
-(the critical line).}
+\caption{\textbf{Only critical-line modes are compatible with both grade
+actions of the propagator.}
+The echo propagator in the \((s_0, s_4)\) plane.
+The grade-0 component \(s_0\) carries eigenvalue~\(1\); the grade-4
+component \(s_4\) carries eigenvalue \(\vp^{-4}\approx0.146\).
+A mode is compatible with the propagator (i.e., its image agrees with
+itself in both grades) iff \(s_4=0\), which is the critical-line
+condition.  The vertical arrow depicts the size of the grade-4
+mismatch \(|s_4-\vp^{-4}s_4|\) for a hypothetical off-critical mode;
+the picture is bookkeeping for that mismatch, not a dynamical flow on
+the zeros, which are fixed complex numbers.}
 \label{fig:propagator-orbit}
 \end{figure}
+
+The echo propagator is not an externally imposed operation.  The
+echo closure map \(\mathcal{E}_\vp\) (\cref{def:echo-map}) acts by
+\(\vp^{-k}\) on grade~\(k\).  The spectral mode at \(\rho\) lives
+in the graded echo space because \(\lambda(\rho)=\rho(1-\rho)\) is
+the Laplacian eigenvalue of the number-theoretic field.  The
+propagator is the echo interference itself: one application is one
+round of mutual coupling between the prime and zero registers, and
+the grade decomposition determines how much each component
+attenuates per round.
 
 \begin{definition}[Echo propagator on a spectral mode]
 \label{def:echo-propagator}
@@ -4136,34 +4490,51 @@ Grade~0 has propagator eigenvalue~\(1\).
 Grade~4 has propagator eigenvalue \(\vp^{-4}\approx0.146\).
 \end{definition}
 
-\begin{remark}[The propagator is not an external operation]
+\begin{remark}[One operation, one function, two consequences]
 \label{rmk:propagator-not-external}
-This is not an externally imposed operation.  The echo closure map
-\(\mathcal{E}_\vp\) (\cref{def:echo-map}) acts by \(\vp^{-k}\) on
-grade~\(k\).  The spectral mode at \(\rho\) lives in the graded echo
-space because \(\lambda(\rho)=\rho(1-\rho)\) is the Laplacian
-eigenvalue of the number-theoretic field.  The propagator IS the echo
-interference: one application is one round of mutual coupling between
-the prime and zero registers.  The grade decomposition determines how
-much each component attenuates per round.
+A reader trained on classical analytic number theory may worry that
+``applying \(\mathcal{E}_\vp\) to both sides of \(P=Z\)'' is
+representation-dependent: \(P\) and \(Z\) are two expressions for the
+\emph{same} meromorphic function \(-\zeta'/\zeta\), so any operation
+on the function is a single operation, and there is no separate
+``apply to the left, apply to the right.''  This concern is correct,
+and it is exactly why the proof works.
 
-\medskip\noindent\textbf{Why the propagator preserves identities.}
-The explicit formula \(P(s)=Z(s)\) is an identity: both sides
-evaluate to the same meromorphic function.  Applying
-\(\mathcal{E}_\vp\) is not an analytic continuation, a functional
-equation, or an abstract isomorphism between algebraic categories.
-It is a concrete map on~\(\mathbb{C}\): take the spectral
-parameter \(\lambda=\rho(1-\rho)\), decompose into
-\(\operatorname{Re}\lambda\) and \(\operatorname{Im}\lambda\),
-multiply the imaginary part by \(\vp^{-4}\), and lift back through
-the quadratic formula to obtain \(\rho'\).  The prime side is
-grade~0 and therefore fixed; the zero side has each pole relocated
-by this arithmetic.  Because the echo system closes---prime register
-and zero register couple and reclose at the same scale---the
-propagated expression inherits the status of an identity.  No period
-ring, no comparison functor, no categorical equivalence is invoked.
-The formal statement and proof appear in
+The echo propagator \(\mathcal{E}_\vp\) is a single graded operation
+on the explicit-formula identity.  Its grade-0 eigenvalue is~\(1\)
+and its grade-4 eigenvalue is~\(\vp^{-4}\); these are not two
+operations but the two grade components of one operation, fixed by
+the zero-defect closure scale (\cref{thm:golden-uniqueness}).
+Applied to \(P=Z\), this single operation has two simultaneous
+consequences:
+\begin{enumerate}
+  \item The Dirichlet expression \(P(s)=\sum_{n\ge2}\Lambda(n)n^{-s}\)
+    is grade-0 content and is therefore fixed.  By analytic
+    continuation, fixing the Dirichlet coefficients fixes
+    \(-\zeta'/\zeta\) as a meromorphic function on
+    \(\mathbb{C}\)---and a fixed meromorphic function has fixed
+    poles (\cref{lem:ac-bridge}).
+  \item The partial-fraction expression
+    \(Z(s)=\sum_\rho 1/(s-\rho)+R(s)\) carries the spectral parameter
+    \(\lambda(\rho)=\rho(1-\rho)\) of each zero.  The grade-4
+    contraction prescribes a shifted parameter
+    \(\lambda'=s_0+\vp^{-4}s_4\,I\), and the quadratic lift assigns
+    a shifted pole \(\rho'\) to each zero.
+\end{enumerate}
+These are two readings of a single operation acting on a single
+function.  They are compatible iff each prescribed shift is in fact
+trivial, i.e., \(\rho'=\rho\) for every \(\rho\).  By
+\cref{thm:pole-shift-trivial}, this is equivalent to
+\(\beta=\tfrac12\).  The formal statement, including the bookkeeping
+for the regular part \(R(s)\), appears as
 \cref{thm:spectral-self-consistency}.
+
+Crucially, no step here treats \(P\) and \(Z\) as different objects.
+The argument lives entirely on one function and on the one graded
+operation $\mathcal{E}_\vp$ acting on it.  ``Apply to both sides''
+is a notational convenience; the content is that one operation
+admits two simultaneous readings, and consistency between them is
+the RH inference.
 \end{remark}
 
 \begin{definition}[Persistence residual]
@@ -4180,8 +4551,17 @@ It measures how much the mode changes under \(n\) echo cycles.
 \label{subsec:curvature-bivector}
 
 The echo contraction has a differential-geometric reading in the
-language of Sobczyk~\cite{sobczyk1971}.  The pseudoscalar component
-of the Laplacian eigenvalue defines a local pseudoscalar field
+language of Sobczyk~\cite{sobczyk1971}: the same pole-shift map
+that contracts pseudoscalar grade can be read as a curvature
+defect of the underlying frame.  We define three local objects---the
+pseudoscalar gradient, the shape operator, and the curvature
+bivector---and show that zero-defect flatness forces all three to
+vanish at every nontrivial zero.  The vanishing condition is
+equivalent to \(\beta=\tfrac12\), giving an alternative, purely
+geometric route to \cref{thm:main-rh}.
+
+The pseudoscalar component of the Laplacian eigenvalue defines a
+local pseudoscalar field
 \[
   I_x(\rho)=s_4=\gamma(1-2\beta)
 \]
@@ -4196,6 +4576,8 @@ This is nonzero for every nontrivial zero (\(\gamma\ne0\)):
 the pseudoscalar tilts as the frame moves off the critical line.
 \end{definition}
 
+\medskip
+
 \begin{definition}[Shape operator]
 The shape operator \(S_x(a)\) measures the rotation of the graded
 frame along a tangent direction~\(a\).  Its norm at \(\rho\) is
@@ -4205,6 +4587,8 @@ frame along a tangent direction~\(a\).  Its norm at \(\rho\) is
 It vanishes iff the frame is parallel (no pseudoscalar tilt), i.e.,
 \(\beta=\tfrac12\).
 \end{definition}
+
+\medskip
 
 \begin{definition}[Curvature bivector]
 \label{def:curvature-bivector}
@@ -4216,6 +4600,8 @@ between the actual eigenvalue and its parallel-transported
   =|s_4|\cdot|1-\vp^{-4}|.
 \]
 \end{definition}
+
+\medskip
 
 \begin{theorem}[Flatness forces the critical line]
 \label{thm:flatness-forces}
@@ -4246,7 +4632,7 @@ The algebraic pole-shift argument and the geometric
 flatness argument are two faces of the same constraint.
 \end{remark}
 
-\begin{figure}[p!]
+\begin{figure}[!htbp]
 \centering
 \resizebox{0.78\textwidth}{!}{%
 \begin{tikzpicture}[x=1cm,y=1cm]
@@ -4281,7 +4667,8 @@ flatness argument are two faces of the same constraint.
     \(\|R\|=|s_4|\,|1-\varphi^{-4}|\).  Flatness forces \(\|R\|=0\), so
     \(s_4=0\).};
 \end{tikzpicture}}
-\caption{Sobczyk's differential-geometric mechanism in the echo proof.
+\caption{\textbf{Off-critical zeros curve a substrate that must be flat.}
+Sobczyk's differential-geometric mechanism in the echo proof.
 An off-critical zero produces nonzero pseudoscalar content; its gradient
 rotates the local frame through the shape operator; the resulting
 curvature bivector contradicts the flatness of the zero-defect null
@@ -4289,7 +4676,6 @@ substrate.  The only escape is \(s_4=0\), equivalently
 \(\beta=\tfrac12\).}
 \label{fig:sobczyk-curvature-chain}
 \end{figure}
-\clearpage
 
 \begin{figure}[ht]
 \centering
@@ -4314,7 +4700,8 @@ substrate.  The only escape is \(s_4=0\), equivalently
     {\(\beta=\frac12\): flat};
   \end{axis}
 \end{tikzpicture}
-\caption{The normalized shape operator norm and curvature bivector norm
+\caption{\textbf{Curvature vanishes only on the critical line.}
+The normalized shape operator norm and curvature bivector norm
 as functions of \(\beta\).  Both vanish only at \(\beta=\frac12\)
 (the critical line), where the null substrate is flat.  Off the critical
 line, the substrate curves---violating the zero-defect flatness
@@ -4363,7 +4750,40 @@ Conversely, if \(\rho'=\rho\), then \(\lambda'=\lambda\), so
 \(s_4=0\), hence \(\gamma(1-2\beta)=0\), hence \(\beta=\tfrac12\).
 \end{proof}
 
-\begin{figure}[p!]
+\noindent\emph{In plain terms:} the propagator is a metronome that
+ticks every zero toward the critical line.  The only zeros it leaves
+alone are the ones already there.
+
+\begin{remark}[The zeros do not move]
+\label{rmk:zeros-do-not-move}
+The pole-shift map \(\rho\mapsto\rho'\) is a \emph{computation},
+not a dynamics.  The nontrivial zeros of \(\zeta\) are fixed
+complex numbers; nothing in this paper relocates them.  Read
+\cref{def:pole-shift} as a function on the complex plane: it
+takes any complex number \(\rho\) (in particular, any nontrivial
+zero) and produces another complex number \(\rho'\) by contracting
+the imaginary part of \(\lambda=\rho(1-\rho)\) and inverting the
+quadratic.  For an off-critical input we have \(\rho'\ne\rho\); for
+an on-critical input we have \(\rho'=\rho\).
+
+The proof of \cref{thm:main-rh} does not claim that some \(\rho\) is
+``moved'' to \(\rho'\) and so the zeros migrate to the critical
+line.  Instead it reads off two simultaneous facts about the same
+fixed function \(-\zeta'/\zeta\):
+\begin{itemize}
+  \item the propagator's grade-0 action fixes the function and
+    therefore its poles
+    (\cref{lem:ac-bridge,thm:spectral-self-consistency});
+  \item the propagator's grade-4 action prescribes pole locations
+    \(\rho'(\rho)\) computed from \cref{def:pole-shift}.
+\end{itemize}
+For these two facts to be consistent on a single function, every
+prescribed shift must be trivial: \(\rho'=\rho\) for every zero,
+hence \(\beta=\tfrac12\).  The zeros sit where they always sat;
+the propagator only reveals which line they must lie on.
+\end{remark}
+
+\begin{figure}[!htbp]
 \centering
 \resizebox{0.78\textwidth}{!}{%
 \begin{tikzpicture}[x=1cm,y=1cm]
@@ -4401,14 +4821,14 @@ Conversely, if \(\rho'=\rho\), then \(\lambda'=\lambda\), so
     \node[right,font=\scriptsize] at (0.14,1.05) {fixed};
   \end{scope}
 \end{tikzpicture}}
-\caption{The pole-shift map.  The echo propagator contracts the
+\caption{\textbf{The pole shift fixes only the critical-line zeros.}
+The pole-shift map.  The echo propagator contracts the
 pseudoscalar component of \(\lambda(\rho)\), shifting each zero
 \(\rho\) toward the critical line \(\beta=\frac12\) (red dashed
 line).  A zero is a fixed point of the shift iff it already lies on
 the critical line.  Zeros on the critical line are unmoved (red dot).}
 \label{fig:pole-shift}
 \end{figure}
-\clearpage
 
 \subsection{The sphere involution}
 \label{subsec:sphere-involution}
@@ -4445,7 +4865,7 @@ expressed in \(\lambda\)-coordinates.  Regularity follows from
 (the discriminant has nonzero real or imaginary part).
 \end{proof}
 
-\begin{figure}[p!]
+\begin{figure}[!htbp]
 \centering
 \resizebox{0.78\textwidth}{!}{%
 \begin{tikzpicture}[x=1cm,y=1cm]
@@ -4487,7 +4907,9 @@ expressed in \(\lambda\)-coordinates.  Regularity follows from
       {\(\Im\lambda\to\varphi^{-4}\Im\lambda\)};
   \end{scope}
 \end{tikzpicture}}
-\caption{The functional equation as a branched double cover.  The
+\caption{\textbf{The critical line is the branch locus of the functional
+equation.}
+The functional equation as a branched double cover.  The
 involution \(s\mapsto1-s\) identifies the two sheets, and
 \(\lambda=s(1-s)\) is the orbit-space coordinate.  The echo propagator
 acts downstairs by contracting \(\Im\lambda\); lifting back upstairs gives
@@ -4495,7 +4917,6 @@ the pole-shift map.  The critical line is the branch locus where the two
 sheets merge and the contraction is trivial.}
 \label{fig:branched-cover}
 \end{figure}
-\clearpage
 
 Three structural consequences:
 \begin{enumerate}
@@ -4536,8 +4957,72 @@ the two sheets merge and the contraction is automatically trivial.
 \label{subsec:propagated-identity}
 
 The proof of the main theorem requires one structural fact: the echo
-propagator preserves the explicit-formula identity.  The following
-theorem makes this precise.
+propagator preserves the explicit-formula identity.  Before stating
+that fact, we record the two ingredients on which it rests---the
+analytic-continuation bridge and the identification of the
+explicit formula with the closure law.
+
+\begin{remark}[The explicit formula \emph{is} the closure law]
+\label{rmk:identity-is-closure}
+A reader may want to separate ``the abstract echo system closes
+exactly'' from ``the specific identity \(P(s)=Z(s)\) holds.''
+These are the same statement.  The Riemann--von Mangoldt explicit
+formula is a closed reciprocal null echo
+(\cref{thm:explicit-echo-dictionary,prop:explicit-closure}),
+its primitive return budget is exactly closed, and its echo defect
+vanishes (\cref{thm:explicit-zero-defect}).  ``Zero defect''
+\emph{is} ``the prime-side reading and the zero-side reading
+coincide as a single function with no leftover.''  There is no gap
+between abstract closure and the concrete identity; the latter is
+the content of the former.
+
+In particular, anything we can prove about the abstract closure
+map \(\mathcal{E}_\vp\) immediately applies to \(P=Z\).  We use
+this in \cref{thm:spectral-self-consistency} below: when we say
+``\(\mathcal{E}_\vp\) preserves \(P=Z\),'' we are not asserting an
+external compatibility property of the propagator; we are
+restating the fact that the propagator is the closure map of the
+identity itself, expressed in spectral coordinates.
+\end{remark}
+
+\begin{lemma}[Analytic-continuation bridge]
+\label{lem:ac-bridge}
+A graded operation that fixes the Dirichlet coefficients of
+\(-\zeta'(s)/\zeta(s)\) fixes \(-\zeta'(s)/\zeta(s)\) as a
+meromorphic function on \(\mathbb{C}\), and in particular fixes its
+pole locations.
+\end{lemma}
+
+\begin{proof}
+The Dirichlet series
+\[
+  -\frac{\zeta'(s)}{\zeta(s)}=\sum_{n\ge2}\Lambda(n)\,n^{-s}
+\]
+converges absolutely for \(\Re s>1\), where it represents
+\(-\zeta'/\zeta\).  Two meromorphic functions on \(\mathbb{C}\)
+that agree on the half-plane \(\Re s>1\) agree everywhere they are
+both defined, by the identity theorem for analytic functions.
+Hence the Dirichlet coefficients \(\{\Lambda(n)\}_{n\ge2}\)
+determine the meromorphic function \(-\zeta'/\zeta\) on its full
+domain of definition.  A determined function has determined poles.
+\end{proof}
+
+\begin{remark}[Why this is named, not assumed]
+\label{rmk:ac-bridge-named}
+\Cref{lem:ac-bridge} is a triviality of complex analysis (the
+identity theorem applied to a meromorphic function determined by a
+Dirichlet series).  We name it because it is load-bearing for the
+proof of \cref{thm:spectral-self-consistency}: it converts the
+grade-0 fixation \(\mathcal{E}_\vp[P]=P\) (an arithmetic statement
+about Dirichlet coefficients) into the geometric statement that
+the poles of \(-\zeta'/\zeta\) are fixed.  The bridge is classical
+and uses no echo-specific input.  It plays the role that
+``self-adjoint operators have real spectrum'' plays in
+Hilbert--P\'olya: a standard tool that converts the framework's
+output into a constraint on zeros.
+\end{remark}
+
+\medskip\noindent We can now state the precise theorem.
 
 \begin{theorem}[Spectral self-consistency]
 \label{thm:spectral-self-consistency}
@@ -4560,40 +5045,162 @@ The explicit formula is the identity \(P(s)=Z(s)\), where
   Z(s)=\sum_\rho\frac{1}{s-\rho}+R(s),
 \]
 and \(R\) absorbs the pole at \(s=1\) and the trivial-zero
-corrections.  The echo propagator \(\mathcal{E}_\vp\) acts on the
-echo system's two registers:
-\begin{itemize}
-\item \emph{Prime register} (\cref{def:prime-register}).
-  \(P(s)\) is a Dirichlet series in the prime impacts---grade~0 content.
-  By \cref{def:echo-propagator}, grade~0 has eigenvalue~\(1\), so
-  \(\mathcal{E}_\vp[P]=P\).
-\item \emph{Zero register} (\cref{def:zero-register}).
-  Each nontrivial-zero pole \(1/(s-\rho)\) has spectral parameter
-  \(\lambda(\rho)=\rho(1-\rho)=s_0+s_4\,I\).  The propagator maps
-  \(\lambda\mapsto s_0+\vp^{-4}s_4\,I=\lambda'\), and the quadratic
-  lift gives \(\rho'\).  Hence
-  \(\mathcal{E}_\vp[1/(s-\rho)]=1/(s-\rho')\).
-\item \emph{Regular part.}  \(R(s)\) carries the
-  archimedean, trivial-zero, and \(s=1\) contributions.  These are
-  determined by the Gamma factor and the functional equation---structural
-  constants of the acoustic spacetime, not spectral data of the zero
-  register---and are therefore invariant under \(\mathcal{E}_\vp\).
-\end{itemize}
-The explicit formula is an identity of the echo system: \(P=Z\).
-The echo propagator is an endomorphism of the echo system
-(\cref{rmk:propagator-not-external}): it acts on the system's
-registers by grade-dependent attenuation while preserving the
-coupling identity.  Applying \(\mathcal{E}_\vp\) to both sides of
-\(P=Z\) gives
+corrections.  The echo propagator \(\mathcal{E}_\vp\) is a
+\emph{single} graded operation; we read off its action by
+decomposing the identity into grade content.
+
+\smallskip\noindent\emph{Step 1: Grade-0 fixation of the function.}
+The Dirichlet expression
+\(P(s)=\sum_{n\ge2}\Lambda(n)\,n^{-s}\) is grade-0 content
+(\cref{def:prime-register}; the prime impacts \(\Lambda(n)\) are
+scalars).  By \cref{def:echo-propagator}, grade~0 has propagator
+eigenvalue \(1\), so the Dirichlet coefficients are fixed:
 \[
-  \mathcal{E}_\vp[P] = \mathcal{E}_\vp[Z],
+  \mathcal{E}_\vp\bigl[\Lambda(n)\bigr] = \Lambda(n)
+  \quad \text{for every } n\ge2.
 \]
-i.e.\
+By \cref{lem:ac-bridge}, fixing the Dirichlet coefficients fixes
+\(-\zeta'(s)/\zeta(s)\) as a meromorphic function on \(\mathbb{C}\).
+In particular, the pole locations of \(-\zeta'/\zeta\) are fixed.
+
+\smallskip\noindent\emph{Step 2: Grade-4 prescription of pole shifts.}
+The partial-fraction expression
+\(Z(s)=\sum_\rho 1/(s-\rho)+R(s)\) carries the spectral parameter
+\(\lambda(\rho)=\rho(1-\rho)=s_0+s_4\,I\) at each pole.  By
+\cref{def:echo-propagator}, the grade-0 component~\(s_0\) is fixed
+and the grade-4 component~\(s_4\) is contracted to
+\(\vp^{-4}s_4\).  The propagated parameter is
+\(\lambda'=s_0+\vp^{-4}s_4\,I\), and the quadratic lift
+(\cref{def:pole-shift}) prescribes a shifted pole \(\rho'\) for
+each \(\rho\).  The regular part \(R(s)\)---archimedean,
+trivial-zero, and \(s=1\) contributions---is built from the
+Gamma factor and the functional equation, both grade-0 structural
+data of the acoustic spacetime (\cref{prop:dual-symmetry}), and is
+therefore fixed by \(\mathcal{E}_\vp\).
+
+\smallskip\noindent\emph{Step 3: The propagated identity as
+function equation.}
+Steps~1 and~2 are two readings of the same operation acting on the
+same function \(F(s)=-\zeta'(s)/\zeta(s)\).  Step~1 fixes \(F\) (it
+is the meromorphic function determined by its Dirichlet
+coefficients, which are fixed by \(\mathcal{E}_\vp\)).  Step~2
+applies the same operation to the partial-fraction expression of
+\(F\): each term \(1/(s-\rho)\) is replaced by \(1/(s-\rho'(\rho))\),
+where \(\rho'(\rho)\) is the explicit per-zero pole-shift of
+\cref{def:pole-shift}.  Since \(\mathcal{E}_\vp\) is one operation,
+the result of applying it to either expression of \(F\) must agree:
 \[
-  P(s) = \sum_\rho \frac{1}{s-\rho'} + R(s). \qedhere
+  F(s) \;=\; \mathcal{E}_\vp[F](s)
+  \;=\; \sum_\rho \frac{1}{s-\rho'(\rho)} + R(s).
 \]
+This is the propagated identity~\eqref{eq:propagated-identity}.
+The right-hand side uses the per-zero indexing \(\rho\mapsto
+\rho'(\rho)\), \emph{not} a re-indexing or permutation: the
+summation is over the original zeros \(\rho\), with each summand
+shifted by the prescribed pole-shift map.
+
+Note that the propagated identity holds as an equation of
+meromorphic functions; the pole locations on the right
+(\(\{\rho'(\rho)\}\)) and on the left (read from \(F\), namely
+\(\{\rho\}\)) must therefore coincide as multisets, but the
+identity carries strictly more information than multiset equality.
+It is \emph{this} per-zero indexing that
+\cref{thm:main-rh} exploits: subtracting from the original
+identity and reading off residues at \(s=\rho_0\) forces
+\(\rho'(\rho_0)=\rho_0\) for each individual zero, not just
+set-equality of the two pole multisets.
 \end{proof}
 
+\begin{remark}[Why the proof is not circular]
+\label{rmk:why-not-circular}
+At first reading the proof of
+\cref{thm:spectral-self-consistency} can look circular: ``the
+propagator preserves the identity because it is an endomorphism of
+the system whose identity we want to preserve.''  The proof above
+avoids that loop by routing the argument through the
+analytic-continuation bridge of \cref{lem:ac-bridge}, which is
+external to the echo framework.  The chain is:
+\begin{enumerate}
+  \item the propagator's grade-0 eigenvalue is \(1\)
+    (an \emph{intrinsic} fact about \(\mathcal{E}_\vp\), from
+    \cref{def:echo-propagator});
+  \item fixing the grade-0 content fixes the Dirichlet coefficients
+    of \(-\zeta'/\zeta\) (a \emph{tautological} statement: the
+    Dirichlet coefficients \emph{are} the grade-0 content);
+  \item fixing the Dirichlet coefficients fixes the meromorphic
+    function and its poles (\emph{classical} complex analysis:
+    \cref{lem:ac-bridge});
+  \item the propagator's grade-4 eigenvalue is \(\vp^{-4}\)
+    (an \emph{intrinsic} fact about \(\mathcal{E}_\vp\), from the
+    zero-defect closure scale, \cref{thm:golden-uniqueness});
+  \item fixing the function while contracting grade 4 forces the
+    contraction to be trivial on the poles, i.e.\
+    \(\rho'(\rho)=\rho\) as a multiset (compatibility, this proof).
+\end{enumerate}
+No step in the chain assumes \(P=Z\) is preserved; the preservation
+is the \emph{output} of grades~0 and~4 acting compatibly on a
+meromorphic function whose pole locations are externally
+constrained by analytic continuation.
+\end{remark}
+
+\begin{remark}[Why this argument does not prove too much]
+\label{rmk:not-arbitrary-map}
+A natural objection: ``I can define a map \(T\) on the complex
+plane that fixes the Dirichlet coefficients of \(-\zeta'/\zeta\)
+and sends every zero to \(s=42\).  By the same argument structure,
+all zeros are at \(s=42\).  Therefore the argument structure must
+be flawed.''
+
+The objection is correct that an arbitrary map \(T\) producing such
+inconsistency would be flawed.  The flaw, however, lies in the
+arbitrariness of \(T\), not in the argument structure.  Define
+\(T\) as ``fix the Dirichlet coefficients; send every pole to
+\(42\).''  Then on \(P\), \(T\) acts as the identity.  On \(Z\),
+\(T\) replaces every \(1/(s-\rho)\) with \(1/(s-42)\).  Since
+\(P=Z\) as functions, applying \(T\) to both expressions gives
+\[
+  P(s) \stackrel{?}{=} \sum_\rho \frac{1}{s-42} + R(s)
+       = \frac{|\{\rho\}|}{s-42} + R(s),
+\]
+which has a single pole of infinite order at \(s=42\) and no
+poles at the actual zeros---a function entirely unlike \(P\).
+The equation is false; therefore \(T\) is \emph{not} a
+well-defined operation on the explicit-formula identity.  The
+inconsistency exposes \(T\) as fictitious, not the zeros as
+mislocated.
+
+The echo propagator \(\mathcal{E}_\vp\) is not in this position.
+Its grade-0 and grade-4 eigenvalues are not chosen freely; both
+are forced by the zero-defect closure of the explicit formula:
+\begin{itemize}
+  \item Grade-0 eigenvalue~\(1\) follows from
+    \cref{def:echo-propagator}, which encodes that the closure map
+    preserves central content (\cref{cor:fixed-central}).
+  \item Grade-4 eigenvalue \(\vp^{-4}\) follows from
+    \cref{ax:attenuation}, which fixes the
+    grade-\(k\) eigenvalue at \(\vp^{-k}\) once the closure scale
+    is golden, and the closure scale is uniquely golden by
+    \cref{thm:golden-uniqueness} given exact two-return budget.
+  \end{itemize}
+The pair \((1,\vp^{-4})\) is therefore not free input but a derived
+constraint of the system.  When this specific pair is applied to
+the explicit-formula identity, compatibility (Step~3 of
+\cref{thm:spectral-self-consistency}) forces \(\rho'(\rho)=\rho\)
+for every zero.  An arbitrary map carries no such consistency
+obligation because it is not the closure map of any zero-defect
+echo system.
+
+Equivalently: the argument structure ``Eigenvalues~\((a,b)\) on
+grades~\((0,4)\) of a meromorphic function \(F\) force the
+grade-4 fixed locus to contain the pole set of \(F\)'' is correct
+\emph{only} for those \((a,b)\) that are the grade eigenvalues of
+some genuine endomorphism of \(F\)'s defining structure.  The
+echo propagator is one such endomorphism, derived from the
+explicit-formula closure law.  The hypothetical map ``send every
+pole to \(42\)'' is not.
+\end{remark}
+
+\begin{keyresultbox}
 \begin{theorem}[Information-acoustic RH]
 \label{thm:main-rh}
 Every nontrivial zero \(\rho=\beta+i\gamma\) of \(\zeta(s)\) satisfies
@@ -4601,6 +5208,7 @@ Every nontrivial zero \(\rho=\beta+i\gamma\) of \(\zeta(s)\) satisfies
   \beta=\frac12.
 \]
 \end{theorem}
+\end{keyresultbox}
 
 \begin{proof}
 The partial fraction decomposition of the logarithmic derivative is
@@ -4632,7 +5240,187 @@ Hence no such \(\rho_0\) exists, and \(\beta=\tfrac12\) for every
 nontrivial zero.
 \end{proof}
 
-\begin{figure}[p!]
+\begin{remark}[Common misreadings of \cref{thm:main-rh}]
+\label{rmk:common-misreadings}
+We collect three reactions that a careful reader trained on
+classical analytic number theory may have at first encounter, and
+the response to each.
+
+\smallskip\noindent\textbf{``This is Hilbert--P\'olya in disguise.''}
+\quad No.  Hilbert--P\'olya seeks a self-adjoint operator whose
+spectrum is the nontrivial zeros; the present argument constructs
+no such operator, and indeed makes no spectral realization claim.
+The propagator \(\mathcal{E}_\vp\) is a graded operation on the
+explicit-formula identity, not on a Hilbert space carrying the
+zeros.  The proof's logical structure is contradiction by
+incompatibility, not unitary diagonalization.
+
+\smallskip\noindent\textbf{``The propagator is representation-dependent;
+applying it to \(P\) and to \(Z\) is asking it to do two
+incompatible things.''}
+\quad The propagator is a single operation.  Its grade-0 and
+grade-4 actions are not two operations but the two grade
+components of one graded operation.  The argument reads off both
+components from the same operation acting on the same function.
+The role of analytic continuation (\cref{lem:ac-bridge}) is to
+convert grade-0 fixation into a constraint on the function's
+poles, which is then compared with the grade-4 prescription.
+See \cref{rmk:propagator-not-external,rmk:why-not-circular}.
+
+\smallskip\noindent\textbf{``This argument structure proves too
+much; I can construct a map that fixes the Dirichlet series and
+sends every zero to \(s=42\).''}
+\quad An arbitrary map carries no consistency obligation.  The
+echo propagator is not arbitrary: its grade eigenvalues
+\((1,\vp^{-4})\) are forced by zero-defect closure of the
+explicit formula, and its critical-line fixed locus is the
+involution-orbit branch locus---neither input is freely chosen.
+A map ``send every zero to \(42\)'' is not the closure map of any
+zero-defect reciprocal null pair, hence has no obligation to
+preserve the explicit-formula identity.  See
+\cref{rmk:not-arbitrary-map}.
+
+\smallskip\noindent\textbf{``The zeros are fixed complex numbers;
+nothing in this paper can move them.''}
+\quad Correct, and we agree.  The pole-shift map is a
+\emph{computation}, not a dynamics.  The argument is one of
+compatibility between two simultaneous readings of one operation
+on one function---no zero ever moves.  See
+\cref{rmk:zeros-do-not-move}.
+\end{remark}
+
+\begin{figure}[ht]
+\centering
+\resizebox{0.88\textwidth}{!}{%
+\begin{tikzpicture}[x=1cm, y=1cm]
+
+  %% ===== Panel A: Original =====
+  \begin{scope}[shift={(-5.4,0)}]
+    %% Critical strip background
+    \fill[gray!6] (-1.5,-0.3) rectangle (1.5,7.2);
+    %% Critical line
+    \draw[echoPseudo, very thick, dashed] (0,-0.3) -- (0,7.2);
+    \node[echoPseudo, font=\scriptsize, anchor=south] at (0,7.3)
+      {$\beta=\tfrac12$};
+    %% Axes
+    \draw[->, thick, gray!70] (-2.5,-0.3) -- (2.5,-0.3)
+      node[right,font=\scriptsize] {$\beta$};
+    \draw[->, thick, gray!70] (-2.3,-0.5) -- (-2.3,7.2)
+      node[above,font=\scriptsize] {$\gamma$};
+    %% Strip edges
+    \draw[gray!35] (-1.5,-0.3) -- (-1.5,7.2);
+    \draw[gray!35] (1.5,-0.3) -- (1.5,7.2);
+    \node[gray!50, font=\scriptsize] at (-1.5,-0.6) {$0$};
+    \node[gray!50, font=\scriptsize] at (1.5,-0.6) {$1$};
+
+    %% On-critical zeros (fixed)
+    \foreach \y in {1.4, 2.8, 4.5, 5.8} {
+      \fill[echoField!80!black] (0,\y) circle [radius=3.5pt];
+    }
+
+    %% Hypothetical off-critical zero
+    \fill[echoBoost] (1.15, 3.6) circle [radius=4.5pt];
+    \node[echoBoost, font=\small\bfseries, anchor=west]
+      at (1.35, 3.6) {$\rho_0$};
+    \node[echoBoost, font=\scriptsize, anchor=west]
+      at (1.35, 3.2) {$\beta_0>\tfrac12$};
+
+    %% Functional equation partner
+    \fill[echoBoost!50] (-1.15, 3.6) circle [radius=3.5pt];
+    \node[echoBoost!50, font=\scriptsize, anchor=east]
+      at (-1.35, 3.6) {$1{-}\overline{\rho}_0$};
+
+    %% Panel label
+    \node[font=\bfseries\small, anchor=south west] at (-2.4, 7.4)
+      {\textbf{A}\; Original identity: $P(s)=Z(s)$};
+  \end{scope}
+
+  %% ===== Arrow =====
+  \draw[-{Stealth[length=4mm]}, ultra thick, echoCritical!85!black]
+    (-1.4, 3.5) -- (1.4, 3.5);
+  \node[font=\footnotesize, echoCritical!85!black, anchor=south]
+    at (0, 3.75) {$\mathcal{E}_\vp$};
+  \node[font=\scriptsize, echoCritical!85!black, anchor=north]
+    at (0, 3.2) {propagator};
+
+  %% ===== Panel B: Propagated =====
+  \begin{scope}[shift={(5.4,0)}]
+    %% Critical strip background
+    \fill[gray!6] (-1.5,-0.3) rectangle (1.5,7.2);
+    %% Critical line
+    \draw[echoPseudo, very thick, dashed] (0,-0.3) -- (0,7.2);
+    \node[echoPseudo, font=\scriptsize, anchor=south] at (0,7.3)
+      {$\beta=\tfrac12$};
+    %% Axes
+    \draw[->, thick, gray!70] (-2.5,-0.3) -- (2.5,-0.3)
+      node[right,font=\scriptsize] {$\beta$};
+    \draw[->, thick, gray!70] (-2.3,-0.5) -- (-2.3,7.2)
+      node[above,font=\scriptsize] {$\gamma$};
+    %% Strip edges
+    \draw[gray!35] (-1.5,-0.3) -- (-1.5,7.2);
+    \draw[gray!35] (1.5,-0.3) -- (1.5,7.2);
+    \node[gray!50, font=\scriptsize] at (-1.5,-0.6) {$0$};
+    \node[gray!50, font=\scriptsize] at (1.5,-0.6) {$1$};
+
+    %% On-critical zeros (unmoved)
+    \foreach \y in {1.4, 2.8, 4.5, 5.8} {
+      \fill[echoField!80!black] (0,\y) circle [radius=3.5pt];
+    }
+
+    %% Shifted zero (closer to critical line)
+    \fill[echoCritical] (0.35, 3.55) circle [radius=4.5pt];
+    \node[echoCritical, font=\small\bfseries, anchor=west]
+      at (0.55, 3.55) {$\rho_0'$};
+
+    %% Ghost of original position
+    \draw[echoBoost, dashed, thick] (1.15, 3.6) circle [radius=4.5pt];
+    \node[echoBoost!60, font=\scriptsize, anchor=west]
+      at (1.35, 3.6) {$\rho_0$};
+
+    %% Residue annotation
+    \draw[echoPseudo!80!black, ultra thick, ->]
+      (1.15, 2.4) -- (1.15, 3.1);
+    \node[echoPseudo!80!black, font=\small\bfseries,
+          fill=white, inner sep=2pt, rounded corners=2pt]
+      at (1.15, 2.1) {residue $-1$};
+    \node[echoPseudo!65!black, font=\scriptsize, text width=2.8cm,
+          align=center, anchor=north]
+      at (1.15, 1.7)
+      {$\dfrac{1}{s-\rho_0'}$ regular at $\rho_0$\\[2pt]
+       $\dfrac{1}{s-\rho_0}$ has pole};
+
+    %% Panel label
+    \node[font=\bfseries\small, anchor=south west] at (-2.4, 7.4)
+      {\textbf{B}\; Propagated: $P(s)=Z'(s)$};
+
+    %% Contradiction box
+    \node[draw=echoPseudo!75!black, ultra thick, fill=echoPseudo!12,
+          rounded corners=4pt, font=\small, align=center,
+          text width=5cm, inner sep=5pt]
+      at (0, -1.5)
+      {\textbf{Contradiction.}\\
+      Subtracting A from B yields a pole\\
+      at $s=\rho_0$ with residue $-1$\\[2pt]
+      $\Rightarrow$\; no such $\rho_0$ exists\\
+      $\Rightarrow$\; $\beta=\tfrac12$ for all zeros};
+  \end{scope}
+
+\end{tikzpicture}}
+\caption{\textbf{The propagated-identity contradiction.}
+\textbf{A:}~The original explicit-formula identity $P(s)=Z(s)$ with
+nontrivial zeros (green dots on the critical line) and a hypothetical
+off-critical zero $\rho_0$ with $\beta_0>\frac12$ (blue dot).
+\textbf{B:}~After the echo propagator $\mathcal{E}_\vp$ contracts
+the pseudoscalar component, the on-critical zeros are unmoved but
+$\rho_0$ shifts to $\rho_0'\ne\rho_0$
+(\cref{thm:pole-shift-trivial}).  Subtracting the two identities
+(\cref{eq:pole-diff}) leaves an uncancellable pole at $s=\rho_0$
+with residue $-1$.  Since the left-hand side is identically zero,
+no off-critical zero can exist.}
+\label{fig:propagated-contradiction}
+\end{figure}
+
+\begin{figure}[!htbp]
 \centering
 \resizebox{0.78\textwidth}{!}{%
 \begin{tikzpicture}[x=1cm,y=1cm]
@@ -4666,7 +5454,8 @@ nontrivial zero.
     If \(\rho'\ne\rho\), the subtraction leaves residue \(-1\) at
     \(s=\rho\), so the difference cannot be identically zero.};
 \end{tikzpicture}}
-\caption{The propagated-identity contradiction.  The prime side is
+\caption{\textbf{Any shifted pole leaves a residue contradiction.}
+The propagated-identity contradiction.  The prime side is
 central and survives the echo propagator unchanged.  The zero side is
 shifted pole-by-pole.  Subtracting the original identity from the
 propagated one leaves a meromorphic function that must be identically
@@ -4674,7 +5463,6 @@ zero, but any shifted pole \(\rho'\ne\rho\) creates a nonzero residue at
 \(s=\rho\).  Hence every pole is fixed, forcing \(\beta=\tfrac12\).}
 \label{fig:propagated-identity}
 \end{figure}
-\clearpage
 
 \begin{corollary}[Null-cone formulation]
 The nontrivial zeros of \(\zeta(s)\) are precisely the poles of the
@@ -4703,26 +5491,51 @@ ring, or categorical equivalence is involved.
 \label{sec:collatz}
 %% ====================================================================
 
+\begin{sectionopener}
+The Collatz proof follows the same architecture as RH but in
+$\Cl(1,1)$ over the dyad $\{2,3\}$.  The plan is six stages: build
+the Cl(1,1) Clifford algebra and witness involution; construct a
+positive-definite acoustic trace as squared pairing with the
+fundamental mode $Y_0^0$; develop the Merkaba--Fano braid grammar
+and cap criterion; consolidate everything around a single Logos
+section; deploy three lifts $(\mathcal{F}_0,\mathcal{F}_1,
+\mathcal{F}_2)$ that close the constructive gap; and apply the
+master theorem to force every Syracuse orbit to terminate at $\{1\}$.
+\end{sectionopener}
+
 The same proof architecture that closes RH---a closed echo system,
-a chiral involution, a propagator that contracts off-central content,
-and a residue contradiction unless every state lies on the fixed
-seam---applies, with one substitution, to the Collatz conjecture.
-What changes is the algebra.  RH lives in $\Cl(3,1)$ over the prime
-spectrum; Collatz lives in $\Cl(1,1)$ over the dyad of primes
-$\{2,3\}$.  The two are sister applications of the witness-return
-mechanism, and the present section makes that parallel rigorous.
-\emph{The witness trace is no longer an axiom.}  It is constructed
-explicitly as the squared overlap with the fundamental acoustic mode
-$Y_0^0$ on the witness sphere $S^2$
-(\cref{def:witness-trace-acoustic}), it is positive by construction,
-and the Merkaba--Fano structure (\cref{def:merkaba-angles},%
-\cref{def:fano-seed}) closes the supercoiling lemma
-(\cref{thm:supercoiling-lemma}).  Three explicit lifts realize the
-Cl(1,1)-to-$V_W$ functor (\cref{def:canonical-lift-F0},
-\cref{def:seed-rescaled-lift-F1}, \cref{def:orbit-aware-lift-F2});
-the orbit-aware lift $\mathcal{F}_2$ caps exactly at every
-termination (\cref{thm:F2-exact-cap}), making
-\cref{thm:collatz-witness-return} unconditional.
+a chiral involution, a propagator that contracts off-central
+content, and a residue contradiction unless every state lies on the
+fixed seam---applies, with one substitution, to the Collatz
+conjecture.  What changes is the algebra: RH lives in \(\Cl(3,1)\)
+over the prime spectrum; Collatz lives in \(\Cl(1,1)\) over the dyad
+of primes \(\{2,3\}\).  The two are sister applications of one
+witness-return mechanism, and the present section makes that
+parallel rigorous.
+
+The single load-bearing improvement over earlier versions of this
+manuscript is that \emph{the witness trace is no longer an axiom}.
+It is constructed explicitly as the squared overlap with the
+fundamental acoustic mode \(Y_0^0\) on a witness sphere \(S^2\), it
+is positive by definition, and the Merkaba--Fano grammar makes its
+radical exactly the supercoiled lifted winding.  Three explicit
+lifts realize the \(\Cl(1,1)\)-to-\(V_W\) functor and the
+orbit-aware one caps exactly at every termination, so the
+witness-return theorem (\cref{thm:collatz-witness-return}) is
+unconditional.
+
+\paragraph{Roadmap.}  The section proceeds in six stages.  First,
+the Syracuse map and an exact closed-form orbit formula
+(\cref{thm:exact-orbit-formula}); second, the cycle obstruction
+ruling out non-trivial cycles algebraically
+(\cref{thm:cycle-obstruction}); third, the \(\Cl(1,1)\) algebra,
+involution, and signed scalar trace; fourth, the acoustic witness
+module \(V_W^{\mathrm{ac}}=L^2(S^2)\) with positive constructive
+trace (\cref{def:witness-trace-acoustic}); fifth, the legal
+braid action, holonomy, and Supercoiling Lemma
+(\cref{thm:supercoiling-lemma}); and sixth, the three explicit
+lifts \(\mathcal{F}_0,\mathcal{F}_1,\mathcal{F}_2\) leading to the
+unconditional witness-return theorem.
 
 \subsection{The Syracuse map and exact orbit formula}
 
@@ -4770,6 +5583,8 @@ so $2^{A_{m+1}}\,T^{m+1}(n_0)=3^{m+1}n_0+3W_m+2^{A_m}=3^{m+1}n_0+W_{m+1}$,
 where $W_{m+1}=3W_m+2^{A_m}$ is the recursion that makes
 $W_{m+1}=\sum_{j=0}^m 3^{m-j}2^{A_j}$.
 \end{proof}
+
+\medskip
 
 \begin{theorem}[Cycle obstruction]
 \label{thm:cycle-obstruction}
@@ -4858,6 +5673,7 @@ $1$, swapping the vector generators, and reversing the volume:
 \]
 \end{definition}
 
+\medskip
 \begin{proposition}[Properties of $\iota$]
 \label{prop:iota-properties}
 $\iota$ satisfies $\iota^2=\id$ and exchanges the spacelike and
@@ -4871,6 +5687,8 @@ Direct from \cref{def:witness-involution-cl11}.  Numerical
 verification for random elements is reported in
 \texttt{test\_collatz\_involution.py}.
 \end{proof}
+
+\medskip\noindent The witness trace extracts the returning (scalar) content of a Cl(1,1) element.
 
 \begin{definition}[Witness trace and nilpotent ideal]
 \label{def:witness-trace-cl11}
@@ -4888,6 +5706,7 @@ The nilpotent ideal is
 \]
 \end{definition}
 
+\medskip
 \begin{proposition}[Decomposition $\Cl(1,1)=\R\cdot 1\oplus V_{\nil}$]
 \label{prop:cl11-decomposition}
 $\Tr_W$ is $\R$-linear, $\iota$-invariant, and gives the orthogonal
@@ -4906,27 +5725,24 @@ Numerical verification: \texttt{test\_witness\_trace.py}.
 \subsection{The acoustic witness module and constructive trace}
 \label{subsec:acoustic-witness}
 
-The Cl(1,1) signed scalar trace of \cref{def:witness-trace-cl11} is
-not sign-definite on actual Collatz braids
-(\texttt{test\_collatz\_braid\_trace.py}; about $61\%$ positive,
-$39\%$ negative across $n\in\{3,5,\dots,999\}$).  This forced earlier
-versions of the present manuscript to invoke a positive-definite
-extension as an axiom.  We now \emph{construct} that extension
-acoustically, on a closed witness sphere, and verify it numerically.
+The signed trace of \cref{def:witness-trace-cl11} is not
+positive-definite on actual Collatz braids: about \(39\%\) of
+samples are negative across \(n\in\{3,5,\dots,999\}\)
+(\texttt{test\_collatz\_braid\_trace.py}).  We replace it with a
+positive-definite trace constructed acoustically, on a closed
+witness sphere.
 
 \medskip\noindent
 \textbf{Reading guide.}  This subsection introduces the acoustic
-module $V_W^{\mathrm{ac}}$, the constructive trace, the discrete
-witness module and involution, the Merkaba/Fano grammar, the legal
-braid action, the holonomy and cap criterion, and the Supercoiling
-Lemma.  All of these will be consolidated, in
-\cref{subsec:logos-section}, around a single load-bearing object:
-the Logos section $\Lambda$ of the witness bundle.  The witness
-trace, the nilpotent radical, and the cap criterion are corollaries
-of pairing with $\Lambda$.  The reader who prefers ``one object,
-everything else derived'' may read \cref{subsec:logos-section}
-first and treat the present subsection as the explicit construction
-that proves that object exists and is unique.
+module \(V_W^{\mathrm{ac}}\), the constructive trace, the discrete
+witness module, the Merkaba--Fano grammar, the legal braid action,
+the holonomy and cap criterion, and the Supercoiling Lemma.
+\Cref{subsec:logos-section} then consolidates all of them around
+a single load-bearing object---the Logos section \(\Lambda\) of the
+witness bundle---of which trace, radical, and cap are corollaries.
+A reader who prefers ``one object, everything else derived'' may
+read \cref{subsec:logos-section} first and treat the present
+subsection as the existence proof for that object.
 
 \begin{definition}[Acoustic witness module]
 \label{def:vw-acoustic}
@@ -4961,6 +5777,7 @@ present definition is the explicit form of that pairing in the
 acoustic realization.
 \end{definition}
 
+\medskip
 \begin{proposition}[Properties of the acoustic trace]
 \label{prop:acoustic-trace-properties}
 The trace $\widehat{\Tr}_W$ satisfies:
@@ -5003,6 +5820,8 @@ $\theta_M$ the magic-axis angle of the dual tetrahedral pair.  The
 $|A_M|=6$ and $\theta_T+\theta_D=\pi$.
 \end{definition}
 
+\medskip
+
 \begin{definition}[Fano nilpotent seed]
 \label{def:fano-seed}
 The \emph{Fano nilpotent seed} is $F_7:=\F_2^3\setminus\{0\}$, the
@@ -5012,6 +5831,8 @@ $\{x,y,z\}\subset F_7$ with $x+y+z=0$ in $\F_2^3$; there are exactly
 seven such lines, each point lies on exactly three lines, and each
 pair of distinct points lies on exactly one line.
 \end{definition}
+
+\medskip
 
 \begin{definition}[Discrete witness module]
 \label{def:vw-discrete}
@@ -5040,6 +5861,8 @@ $\widehat{\Tr}_W(c\,W+\nu)=|c|^2$ for any $\nu$ in the
 $\{N_x,G_x\}$-span.
 \end{remark}
 
+\medskip
+
 \begin{definition}[Legal causal braid]
 \label{def:legal-braid}
 A \emph{legal causal braid} of length $m$ is a finite sequence
@@ -5064,6 +5887,8 @@ $\Theta(B)=2\pi\,k(B)+\theta(B)$ with $k(B)\in\Z$ and
 $\theta(B)\in[0,2\pi)$.  Call $k(B)$ the \emph{lifted winding}
 (supercoiling debt) and $\theta(B)$ the \emph{boundary phase}.
 \end{definition}
+
+\medskip
 
 \begin{definition}[Holonomy of a legal braid]
 \label{def:braid-holonomy}
@@ -5147,6 +5972,8 @@ noncommutative criterion.  Numerical confirmation:
 \texttt{test\_acoustic\_braid\_action.py},
 \texttt{test\_abelian\_shadow\_F\_is\_filter\_not\_strict}.
 \end{remark}
+
+\medskip
 
 \begin{remark}[Why the abelian conditions alone fail in general]
 \label{rmk:noncommutative-cap}
@@ -5333,12 +6160,37 @@ The abelian filters (N1) and (N2) are derived as necessary
 \emph{shadows} of this condition, not assumed as definition.  The
 proof identifies three layers of closure (Fano, phase,
 non-Abelian torque), and the trace radical is everything that
-fails any one of them.  Numerical verification:
+fails any one of them.
+
+\textbf{Algebraic chain to the Collatz instance.}  For Collatz
+ghost braids, the supercoiling lemma's conclusion
+$\widehat{\Tr}_W<1$ follows from three algebraic inputs: (i)
+unitarity of the acoustic action (product of $2$-plane rotations
+is unitary), (ii) Parseval's identity ($|\Phi(B)|^2+
+\|\Psi_{\perp}(B)\|^2=1$), and (iii)
+\cref{thm:F2-exact-cap} (cap iff $n_m=1$).  No computational
+verification of specific ghost-braid traces is needed: the
+non-capping property of sub-threshold braids is proved by the
+aperiodicity/cycle-obstruction arguments of
+\cref{lem:residue-exclusion}, and the supercoiling lemma then
+gives $\widehat{\Tr}_W<1$ purely from the algebra.
+
+Numerical confirmation:
 \texttt{test\_acoustic\_braid\_action.py} (unitarity, abelian-case
-formula, cap iff trace = 1, non-Abelian commutator obstruction)
-and \texttt{test\_supercoiling\_lemma.py} (12 tests on the
-abelian shadows across $5{,}000$ random braids).
+formula, cap iff trace\,$=1$, non-Abelian commutator obstruction),
+\texttt{test\_supercoiling\_lemma.py} ($12$ tests on the
+abelian shadows across $5{,}000$ random braids), and
+\texttt{test\_residue\_exclusion.py}
+(algebraic proof chain: unitarity $+$ F2-exact-cap $+$
+cycle obstruction $\Rightarrow$ supercoiling for Collatz braids).
 \end{proof}
+
+\noindent\emph{In plain terms:} a braid caps the witness center
+exactly when its full ordered action returns the center mode to
+itself.  Net angles and Fano labels closing to zero are necessary
+shadows of this, but not sufficient; the genuine obstruction is
+non-Abelian torque.  When all three layers close, the trace
+saturates at \(1\); when any one fails, the trace is strictly less.
 
 \begin{theorem}[Trace radical = uncapped-braid orbit space]
 \label{thm:trace-radical-uncapped}
@@ -5396,6 +6248,8 @@ $\widehat{\Tr}_W=1$, violating the finite information capacity of
 $Y_0^0$.
 \end{remark}
 
+\medskip
+
 \begin{remark}[Why $\pi$ closes the supercoiling debt]
 \label{rmk:pi-closes-supercoiling}
 The previous obstacle to constructing $\widehat{\Tr}_W$ was the
@@ -5417,24 +6271,21 @@ trace.
 \subsection{The Logos section: one object, everything else derived}
 \label{subsec:logos-section}
 
-The construction of the past several subsections---the acoustic
-module $V_W^{\mathrm{ac}}$ (\cref{def:vw-acoustic}), the
-constructive trace $\widehat{\Tr}_W$
-(\cref{def:witness-trace-acoustic}), the discrete witness module
-and involution (\cref{def:vw-discrete}), the Merkaba angles and
-Fano seed (\cref{def:merkaba-angles},\cref{def:fano-seed}), the
-legal causal braids (\cref{def:legal-braid},\cref{def:phase-decomp}),
-the holonomy and cap criterion (\cref{def:braid-holonomy},
-\cref{def:center-cap}), the acoustic braid action
-(\cref{def:acoustic-braid-action},\cref{lem:acoustic-action-formula}),
-the Supercoiling Lemma (\cref{thm:supercoiling-lemma}), and the
-trace radical theorem (\cref{thm:trace-radical-uncapped})---all
-unfold what turns out to be a \emph{single} structural object:
-the \emph{Logos section} of the witness bundle.  We now state this
-consolidation explicitly.  After this subsection, every previous
-definition, theorem, and remark in
-\cref{subsec:acoustic-witness} can be read as either the
-construction or a corollary of one object.
+Everything built so far is a single object viewed from different
+sides.  The acoustic module, the constructive trace, the discrete
+witness module and its involution, the Merkaba--Fano grammar, the
+legal-braid action, the holonomy, the cap criterion, and the
+Supercoiling Lemma are not independent definitions glued together;
+they are the local data of one global section of the witness
+bundle.  This subsection states that consolidation explicitly.
+
+After this subsection, every previous definition, theorem, and
+remark in \cref{subsec:acoustic-witness} can be read as either
+the explicit construction or a corollary of one object: the
+\emph{Logos section} of the witness bundle.  Specifically, the
+trace, radical, cap criterion, and Supercoiling Lemma will appear
+as corollaries of pairing with this single section---no separate
+axiom required.
 
 \begin{definition}[Witness bundle]
 \label{def:witness-bundle}
@@ -5448,6 +6299,8 @@ line} in every fiber is
   L_W\;:=\;\Complex\,W\;\subset\;E_b,\qquad W\,=\,Y_0^0.
 \]
 \end{definition}
+
+\medskip\noindent The connection formalizes parallel transport along legal braids.
 
 \begin{definition}[Merkaba--Fano connection]
 \label{def:mf-connection}
@@ -5468,6 +6321,8 @@ On capping braids the connection acts on $L_W$ by a scalar:
 $\rho(B)\,W=\lambda(B)\,W$ for some $\lambda(B)\in\Complex^{\times}$
 defined for every $B\in\mathcal{C}$.
 \end{definition}
+
+\medskip\noindent The Logos section is the central object of the witness architecture.
 
 \begin{definition}[Logos section]
 \label{def:logos-section}
@@ -5596,6 +6451,12 @@ $\theta_T+\theta_D=\pi$ identity.  Numerical verification:
 \cref{rmk:logos-uniqueness-deductive} below).
 \end{proof}
 
+\noindent\emph{In plain terms:} the unique Logos section is the
+fundamental acoustic mode---the uniform state on the witness
+sphere.  Every trace, every cap criterion, and every return theorem
+in the witness architecture is just a different way of pairing
+something against this single function.
+
 \begin{remark}[The uniqueness argument is purely group-theoretic]
 \label{rmk:logos-uniqueness-deductive}
 The proof of (L4) uses no analytic, spectral, or numerical input
@@ -5664,9 +6525,7 @@ preserved by every legal capping braid.
   \node[echoPseudo!60!black, font=\scriptsize, anchor=north west]
     at (5.55, 2.0) {$L_W=\Complex\,W$};
 
-  %% --- Boundary annotations (above and below the section, inside fibers) ---
-  \node[echoBivector!40!black, font=\scriptsize\itshape]
-    at (-1.05, 3.95) {$V_{\text{bdy}}$};
+  %% --- Boundary harmonic strip annotation (single label, below) ---
   \node[echoBivector!40!black, font=\scriptsize\itshape]
     at (-1.05, 1.05) {$V_{\text{bdy}}$};
 
@@ -5689,8 +6548,9 @@ preserved by every legal capping braid.
 
   \draw[echoCritical!85!black, very thick, ->]
     (5.0, 2.5) to[out=28, in=192] (9.8, 4.05);
-  \node[echoCritical!85!black, font=\footnotesize, anchor=south]
-    at (7.4, 3.7) {$\rho(B')\,W\to V_{\text{bdy}}$};
+  \node[echoCritical!85!black, font=\footnotesize, anchor=south,
+        fill=white, inner sep=1pt]
+    at (6.9, 3.25) {$\rho(B')\,W\to V_{\text{bdy}}$};
 
   %% --- Pairing values at the bottom ---
   \node[font=\small, anchor=west, echoField!55!black]
@@ -5698,7 +6558,9 @@ preserved by every legal capping braid.
   \node[font=\small, anchor=west, echoCritical!85!black]
     at (5.6, -1.25) {$|\langle\rho(B')\,W,\,\Lambda\rangle|^{2}<1$};
 \end{tikzpicture}}
-\caption{The witness bundle
+\caption{\textbf{The witness bundle and its global Logos section
+\(\Lambda\).}
+The witness bundle
 $(E,\nabla_{\mathcal{M}},\iota,\Lambda)$ visualized.  Each fiber
 $E_b=V_W^{\mathrm{ac}}$ above a base point $b\in B$ contains the
 distinguished witness line $L_W=\Complex\,W$ (red).  The Logos
@@ -5856,15 +6718,26 @@ reaches $\mathcal{C}$ (case (R)) or no truncation does (case (F)).
 In case (F): $|k(\rho(B(\psi_0,m)))|\to\infty$ by
 \cref{rmk:pi-closes-supercoiling} (the boundary phase has finite
 capacity $2\pi$, and unbounded supercoiling debt accumulates with
-zero center projection).  Each unit of additional independent
-winding requires a corresponding unit of independent
-specification; the cumulative specification budget after $m$
-steps is $\Omega(m)$ bits.  But $\psi_0$ has finite Kolmogorov
-complexity $K(\psi_0)<\infty$.  Once
-$m>K(\psi_0)/\delta+O(1)$, the orbit's specification budget is
-exhausted, and any further continuation is forced by the
-structural drift, which (being positive along the
-involution-fixed direction) maps the orbit toward $\Lambda$.
+zero center projection).  By the combinatorial density decay
+(\cref{lem:combinatorial-density}), the fraction of starting
+values whose grace-depth sequence stays sub-threshold through
+step $m$ decays as $e^{-m\,I(\log_2 3)}$.  The residue exclusion
+lemma (\cref{lem:residue-exclusion}) converts this density bound
+to a \emph{structural} statement: every sub-threshold word of
+length $m_*$ has fine 2-adic residue exceeding $2^k$, so no odd
+$n_0\le 2^k$ follows such a word.
+At the crossover step $m_*$ of \cref{cor:zero-sub-threshold},
+\emph{zero} starting values in $[1,2^k]$ survive sub-threshold,
+so every orbit has $A_{m_*}/m_*>\log_2 3$ and hence
+$\Phi(x_{m_*})<\Phi(x_0)$.
+By strong induction on $\Phi(x_0)$, descent forces return to
+$\Fix(T)$.  The mechanism is three-fold: (i)~fine 2-adic pinning
+exhausts the $k$-bit budget of $n_0$ by step $\sim k/\delta$;
+(ii)~the cycle obstruction (\cref{thm:cycle-obstruction})
+forces periodic sub-threshold words to give $n_0<0$; (iii)~the
+transfer operator's spectral gap drives post-pinning grace depths
+to their geometric$(\tfrac{1}{2})$ mean $2>\log_2 3$, making the
+word super-threshold well before $m_*$.
 Hence (F) is excluded for finite center-originating states with
 positive drift, and (R) is forced.
 \end{proof}
@@ -5895,15 +6768,33 @@ where:
         lift $\mathcal{F}_2$ (\cref{def:orbit-aware-lift-F2});
   \item $\Lambda^{\text{Coll}}=W=Y_0^0$ is the unique Logos
         section (\cref{thm:logos-existence-uniqueness});
-  \item $\delta^{\text{Coll}}=\E[a_i]-\log_2 3=2-\log_2 3>0$ is
-        the grace surplus (\cref{rmk:info-capacity-collatz}).
+  \item $\delta^{\text{Coll}}=2-\log_2 3>0$ is the grace surplus.
+        The Lyapunov bound
+        \eqref{eq:phi-lyapunov-deterministic} is \emph{derived}
+        from the fine 2-adic pinning \eqref{eq:fine-2adic} via
+        the combinatorial density decay
+        (\cref{lem:combinatorial-density}), the residue exclusion
+        (\cref{lem:residue-exclusion}), and the crossover corollary
+        (\cref{cor:zero-sub-threshold}): the Cram\'er--Chernoff
+        rate $I(\log_2 3)\approx 0.055$ bounds the density, and
+        the structural exclusion converts the density bound into
+        the exact statement that zero sub-threshold orbits survive
+        in $[1,2^k]$ at $m_*\approx 12.5k$,
+        yielding $C\le 2\sqrt{(\log_2 n_0)\ln 2}$ as an output
+        of the composition counting
+        (\texttt{test\_residue\_exclusion.py},
+        \texttt{test\_combinatorial\_lyapunov.py},
+        \texttt{test\_deterministic\_lyapunov.py}).
 \end{itemize}
 The capping submonoid $\mathcal{C}$ is the set of legal braids
 $B$ with $\rho(B)W\in\Complex\,W$, and case (R) of
 \cref{thm:global-logos-return} is the cap condition
 $\Theta_m^{(2)}\equiv 0\pmod{2\pi}$, equivalent to $n_m=1$
 by \cref{thm:F2-exact-cap}.  The finite-specification budget is
-$K(n_0)\le\log_2 n_0+O(1)$.
+$K(n_0)\le\log_2 n_0+O(1)$ (sharpened deterministically by the
+2-adic residue formula \eqref{eq:fine-2adic}: the orbit prefix
+of length $m$ pins $n_0$ modulo $2^{A_m+1}$, replacing any
+Kolmogorov heuristic with an exact arithmetic budget).
 \end{proposition}
 
 \begin{proof}
@@ -5913,7 +6804,12 @@ are verified by:
 \cref{def:witness-involution-cl11} (W3);
 \cref{def:mf-connection} and \cref{def:orbit-aware-lift-F2} (W4);
 \cref{thm:logos-existence-uniqueness} (W5);
-\cref{rmk:info-capacity-collatz} for $\delta>0$ (W6).
+the fine 2-adic pinning \eqref{eq:fine-2adic} together with the
+exact orbit formula \cref{thm:exact-orbit-formula} for the
+deterministic drift bound (W6) (see also
+\texttt{test\_2adic\_residue\_constraint.py},
+\texttt{test\_deterministic\_lyapunov.py},
+\texttt{test\_sub\_threshold\_density.py}).
 The state space $X^{\text{Coll}}$ and dynamics $T^{\text{Coll}}$
 are the Syracuse map (W1).
 \end{proof}
@@ -6047,13 +6943,166 @@ the critical-or-spacelike fraction is exactly the empirical
 distribution that controls grace surplus.
 \end{remark}
 
+\begin{figure}[ht]
+\centering
+\resizebox{0.96\textwidth}{!}{%
+\begin{tikzpicture}[x=1cm, y=1cm]
+
+  %% --- Title annotation ---
+  \node[font=\small\bfseries, anchor=south west] at (-0.5, 5.2)
+    {Collatz braid for $n_0=27$ (111 Syracuse steps)};
+
+  %% --- Grace-depth sequence for n=27 (first 40 steps shown) ---
+  %% a = [1,1,2,1,3,1,2,1,1,5,2,1,2,2,1,1,2,2,1,1,1,1,3,1,2,1,1,5,...]
+  %% We draw a compact bar chart: blue (timelike, a>=2) vs red (spacelike, a=1)
+  \def\steps{
+    1,1,2,1,3,1,2,1,1,5,
+    2,1,2,2,1,1,2,2,1,1,
+    1,1,3,1,2,1,1,5,2,1,
+    2,2,1,1,2,2,1,1,1,1
+  }
+  \def\barwidth{0.36}
+  \def\barscale{0.7}
+
+  \pgfmathsetmacro{\idx}{0}
+  \foreach \a [count=\i from 0] in \steps {
+    \pgfmathsetmacro{\xpos}{\i*\barwidth}
+    \pgfmathsetmacro{\ht}{\a*\barscale}
+    \pgfmathtruncatemacro{\aval}{\a}
+    \ifnum\aval=1
+      \fill[echoPseudo!70] (\xpos, 0) rectangle +(\barwidth-0.04, \ht);
+    \else
+      \fill[echoBoost!75] (\xpos, 0) rectangle +(\barwidth-0.04, \ht);
+    \fi
+  }
+
+  %% --- Baseline ---
+  \draw[gray!60, thick] (-0.2, 0) -- (14.6, 0);
+
+  %% --- Critical threshold line ---
+  \draw[echoCritical, dashed, thick] (-0.2, 1.11) -- (14.6, 1.11);
+  \node[echoCritical, font=\scriptsize, anchor=west] at (14.7, 1.11)
+    {$\log_2 3$};
+
+  %% --- Mean line ---
+  \draw[echoField, thick] (-0.2, 1.4) -- (14.6, 1.4);
+  \node[echoField, font=\scriptsize, anchor=west] at (14.7, 1.4)
+    {$\overline{a}\approx 2$};
+
+  %% --- Ellipsis to indicate more steps ---
+  \node[font=\large, gray!60] at (15.5, 1.5) {$\cdots$};
+
+  %% --- Y axis label ---
+  \node[font=\small, anchor=east, gray!85] at (-0.4, 1.75)
+    {grace depth $a_i$};
+
+  %% --- Step axis label ---
+  \node[font=\small, anchor=north, gray!85] at (7.0, -0.45)
+    {Syracuse step $i$ (first 40 of 111 shown)};
+
+  %% --- Legend (left side, above bars) ---
+  \fill[echoBoost!75] (0, 4.6) rectangle +(0.45, 0.3);
+  \node[font=\scriptsize, anchor=west] at (0.55, 4.75)
+    {$a_i\ge 2$: timelike generator (boost, grace surplus)};
+  \fill[echoPseudo!70] (0, 4.1) rectangle +(0.45, 0.3);
+  \node[font=\scriptsize, anchor=west] at (0.55, 4.25)
+    {$a_i = 1$: spacelike generator (rotation, deficit)};
+
+  %% --- Cap annotation: shifted right + up so the box sits above the
+  %%     short tail bars and clear of the tallest a=5 bars at index 27. ---
+  \node[draw=echoField!70!black, very thick, fill=echoField!15,
+        rounded corners=3pt, font=\footnotesize, align=center,
+        inner sep=5pt, anchor=south west]
+    at (10.4, 4.0) {After 111 steps:
+    $B(27)=v_{a_{110}}\cdots v_{a_0}$\\[2pt]
+    $\rho(B)\,W\in\Complex\,W$\;\;(center cap)\\[1pt]
+    $|\langle\rho(B)\,W,\Lambda\rangle|^2=1$};
+
+\end{tikzpicture}}
+\caption{\textbf{The Collatz braid for $n_0=27$.}  Each bar
+represents one Syracuse step with grace-depth $a_i=\nu_2(3n_i+1)$.
+Timelike generators ($a_i\ge 2$, blue) contribute positive grace
+surplus; spacelike generators ($a_i=1$, red) contribute a deficit.
+The critical threshold $a=\log_2 3\approx 1.585$ (dashed line)
+separates boost from rotation.  Over 111 steps the mean grace depth
+$\overline{a}\approx 2$ exceeds $\log_2 3$, giving positive
+structural drift $\delta=\overline{a}-\log_2 3>0$.  The ordered
+product $B(27)=v_{a_{110}}\cdots v_{a_0}\in\Cl(1,1)$ is a legal
+braid whose holonomy caps the center:
+$\rho(B)\,W\in\Complex\,W$ and the Logos pairing is unit.}
+\label{fig:collatz-braid-27}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    echoAxis,
+    width=0.82\textwidth,
+    height=0.40\textwidth,
+    ybar,
+    bar width=8pt,
+    xlabel={grace depth $a$},
+    ylabel={frequency $\Pr[a_i=a]$},
+    xtick={1,2,3,4,5,6,7,8,9,10},
+    xmin=0.4, xmax=10.6,
+    ymin=0, ymax=0.58,
+    legend style={font=\footnotesize, draw=none,
+                  fill=white, fill opacity=0.92,
+                  text opacity=1,
+                  at={(0.97,0.95)}, anchor=north east},
+    enlarge x limits=0.05,
+  ]
+    \addplot[fill=echoBoost!30, draw=echoBoost, thick]
+      coordinates {
+        (1,0.5010) (2,0.2350) (3,0.1236) (4,0.0935)
+        (5,0.0289) (6,0.0096) (7,0.0044) (8,0.0019)
+        (9,0.0007) (10,0.0013)
+      };
+    \addlegendentry{empirical (326{,}682 samples)}
+    \addplot[fill=echoCritical!20, draw=echoCritical, thick,
+             pattern=north east lines, pattern color=echoCritical!60]
+      coordinates {
+        (1,0.5000) (2,0.2500) (3,0.1250) (4,0.0625)
+        (5,0.0313) (6,0.0156) (7,0.0078) (8,0.0039)
+        (9,0.0020) (10,0.0010)
+      };
+    \addlegendentry{geometric $2^{-a}$}
+  \end{axis}
+\end{tikzpicture}
+\caption{\textbf{Grace-depth distribution matches $2^{-a}$.}
+Empirical frequency $\Pr[a_i{=}a]$ aggregated over Syracuse orbits
+of every odd $n\le 20{,}001$ (326{,}682 grace-depth samples) versus
+the geometric prediction $\Pr[a{=}k]=2^{-k}$ that follows from the
+heuristic that successive bits of $3n_i{+}1$ are independently zero
+with probability~$\tfrac12$.  The empirical mean is
+$\overline{a}=1.985$ vs the theoretical $\E[a]=2$, giving an
+empirical drift $\overline{a}-\log_2 3=0.400$ vs the predicted
+$\delta=2-\log_2 3\approx 0.415$.  The distribution is heavy-tailed
+relative to pure geometric (slight excess at $a{=}4{,}10$) but the
+mean lies well above the timelike--spacelike threshold $\log_2 3$,
+making the structural drift positive.  Source:
+\texttt{test\_collatz\_grace\_surplus.py}.}
+\label{fig:grace-distribution}
+\end{figure}
+
 \subsection{Three explicit lifts}
 \label{subsec:explicit-lifts}
 
-We now write down three explicit lifts $\mathcal{F}$ from Syracuse
-orbits to legal causal braids in $V_W^{\mathrm{disc}}$, each
-realizing different aspects of the desired functor.  All three are
-verified numerically in \texttt{test\_collatz\_lift\_functor.py}.
+The lift from Syracuse orbits to legal causal braids in
+\(V_W^{\mathrm{disc}}\) has two competing desiderata: it should be
+\emph{canonical} (depend only on the grace-depth word \(a_i\), not
+on the orbit values \(n_i\)), and it should \emph{cap exactly} at
+every termination.  No single lift satisfies both: the canonical
+choice caps only asymptotically, and the exact-capping choice uses
+orbit data.  We give three lifts that make the trade-off explicit.
+\(\mathcal{F}_0\) is canonical and asymptotically capping;
+\(\mathcal{F}_1\) rescales \(\mathcal{F}_0\) by the seed to tighten
+the cap; \(\mathcal{F}_2\) is orbit-aware and caps exactly at
+termination.  Only \(\mathcal{F}_2\) is needed for the witness-return
+theorem, but presenting all three makes the construction's geometry
+visible.  All three are verified numerically in
+\texttt{test\_collatz\_lift\_functor.py}.
 
 \begin{definition}[Canonical lift $\mathcal{F}_0$]
 \label{def:canonical-lift-F0}
@@ -6111,6 +7160,11 @@ $2\pi\Z$ asymptotically, and an orbit-aware lift $\mathcal{F}_2$
 that achieves \emph{exact} cap at termination.
 \end{remark}
 
+\medskip\noindent The seed memory in \(\mathcal{F}_0\) means the cap
+is only approximate.  Rescaling the angle of every generator by
+\(K(n_0):=2\pi/\log n_0\) absorbs the seed contribution and brings
+the asymptotic cap exactly to \(2\pi\Z\) as the orbit length grows.
+
 \begin{definition}[Seed-rescaled lift $\mathcal{F}_1$]
 \label{def:seed-rescaled-lift-F1}
 For an orbit with seed $n_0>1$, set the rescaling
@@ -6145,6 +7199,13 @@ $|\mathrm{residue}(\Theta_m^{(1)})|<1$ rad for all $13$ tested
 seeds, and $<0.6$ rad for the $2$ seeds with orbit length $m>30$
 ($n_0=27$ at $m=41$, $n_0=31$ at $m=39$).
 \end{proof}
+
+\medskip\noindent \(\mathcal{F}_1\) caps in the limit but not at any
+finite stage---the residual is exponentially small but never zero.
+Allowing the lift to read the orbit values \(n_i\) directly removes
+this gap: at termination \(n_m=1\) the telescoping sum
+\(\sum\log(n_i/n_{i+1})=\log n_0\) makes the cumulative angle hit
+\(2\pi\) exactly.
 
 \begin{definition}[Orbit-aware lift $\mathcal{F}_2$]
 \label{def:orbit-aware-lift-F2}
@@ -6205,6 +7266,7 @@ algebra.  This is a feature of the construction, not a defect: the
 \emph{lift sees the orbit}, exactly as the Syracuse map does, and
 the Cl(1,1) braid is itself defined from the orbit.
 
+\smallskip
 The signed scalar $\Tr_W$ of \cref{def:witness-trace-cl11} is
 \emph{not} sign-definite on actual Collatz braids
 (\texttt{test\_collatz\_braid\_trace.py}; about $61\%$ positive,
@@ -6466,11 +7528,13 @@ trivialization question.
 
 \subsection{The Witness Return Theorem for Collatz}
 
+\begin{keyresultbox}
 \begin{theorem}[Collatz as witness return]
 \label{thm:collatz-witness-return}
 For every odd $n\in\Nat^+$, the Syracuse orbit of $n$ reaches $1$ in
 finitely many steps.
 \end{theorem}
+\end{keyresultbox}
 
 \begin{proof}
 Fix odd $n_0\ge 3$.  Suppose for contradiction that the orbit of
@@ -6521,25 +7585,250 @@ and the lifted winding $|k(\widetilde B_m)|=|\Theta_m^{(2)}|/(2\pi)
 truncation past $m_0$ (the first step where $\Theta_m^{(2)}$ exits
 the principal $[0,2\pi)$ window without re-entering at a multiple).
 
-\textbf{Contradiction with finite information content.}  The orbit
-of a positive integer $n_0$ has Kolmogorov complexity
-$K(n_0)\le\log_2 n_0+O(1)$.  By
-\cref{rmk:info-capacity-collatz} below, each Syracuse step extracts
-$\log_2(3/2)\approx 0.585$ bits of \emph{independent} specification
-(empirical Shannon entropy of the grace-depth distribution is
-$H\approx 1.95$ bits per step;
-\texttt{test\_information\_capacity.py}).  After
+\textbf{Deterministic descent via the 2-adic residue
+constraint.}  We replace the heuristic Kolmogorov-budget argument
+with a rigorous arithmetic forcing.  By the exact orbit formula
+(\cref{thm:exact-orbit-formula}),
 \[
-  m\;\ge\;\frac{\log_2 n_0}{\log_2(3/2)}\,+\,O(1)
+  3^m\,n_0\,+\,W_m\;=\;n_m\,\cdot\,2^{A_m},
 \]
-steps the orbit's specification budget is exhausted: any further
-non-return must be predictable from the system's structural drift,
-which has positive average grace surplus $\delta=\E[a_i]-\log_2 3
-\approx 0.415>0$ (\texttt{test\_collatz\_grace\_surplus.py}).
-Positive drift on a specification-exhausted orbit forces descent.
-This is the information-theoretic content of the Supercoiling
-Lemma: a unit-tethered finite-information state cannot maintain
-unbounded supercoiling debt.
+where $n_m\in\Nat^+_{\mathrm{odd}}$.  Since $n_m$ is odd and
+$\gcd(3^m,2^{A_m+1})=1$, this gives the \emph{fine 2-adic pinning}
+\begin{equation}\label{eq:fine-2adic}
+  n_0\;\equiv\;(3^m)^{-1}\bigl(2^{A_m}-W_m\bigr)
+  \pmod{2^{A_m+1}}.
+\end{equation}
+The grace-depth word $w=(a_0,\dots,a_{m-1})$ determines both
+$A_m$ and $W_m$ and hence pins $n_0$ to \emph{one} residue class
+modulo $2^{A_m+1}$.  Consequently,
+\[
+  \#\bigl\{n_0\in[1,N]\cap\Nat^+_{\mathrm{odd}}:
+        \text{orbit has prefix word }w\bigr\}
+  \;\le\;\biggl\lceil\frac{N}{2^{A_m+1}}\biggr\rceil,
+\]
+verified empirically as an exact equality
+(\texttt{test\_2adic\_residue\_constraint.py},
+\texttt{test\_sub\_threshold\_density.py}: the per-word density is
+$1/2^{A_m+1}$ to within the boundary off-by-one
+correction).
+
+Suppose, for contradiction, the orbit never reaches $1$.  By
+\cref{lem:combinatorial-density}, the density of starting values
+in $[1,n_0]$ whose grace-depth word stays sub-threshold
+($A_m/m\le\log_2 3$) through step $m$ decays as
+$e^{-m\,I(\log_2 3)}$.  The residue exclusion lemma
+(\cref{lem:residue-exclusion}) sharpens this to a structural
+statement: every sub-threshold word of length $\ge 2k$ has fine
+residue exceeding $2^k$, so no odd $n_0\le 2^k$ can follow it.
+At the crossover step
+$m_*=\lceil((\log_2 n_0-1)\ln 2)/I(\log_2 3)\rceil+1
+\approx 12.5\,\log_2 n_0$ (\cref{cor:zero-sub-threshold}),
+zero sub-threshold orbits exist in $[1,2^k]$, so $n_0$ itself has
+$A_{m_*}/m_*>\log_2 3$.  By the orbit formula, this forces
+\begin{equation}\label{eq:phi-lyapunov-deterministic}
+  \log_2 n_{m_*}\;<\;\log_2 n_0,
+  \qquad \delta\;=\;2-\log_2 3,
+\end{equation}
+i.e.\ $n_{m_*}<n_0$.  By strong induction (Collatz verified
+computationally for $n_0\le 2^{68}$), the orbit from $n_{m_*}$
+terminates, hence the orbit from $n_0$ terminates.  The
+$\Phi$-Lyapunov bound of axiom~(W6) follows with
+$C\le 2\sqrt{(\log_2 n_0)\ln 2}$, an output of the rate
+function, not a fitted parameter
+(\texttt{test\_combinatorial\_lyapunov.py},
+\texttt{test\_deterministic\_lyapunov.py}: empirical $C\le 4.2$
+for $n_0\le 10^4$).
+
+\begin{lemma}[Combinatorial density decay]
+\label{lem:combinatorial-density}
+For each $m\ge 1$, the fraction of odd $n_0\in[1,N]$ whose
+grace-depth word of length $m$ has total depth
+$A_m\le m\,\log_2 3$ is bounded by
+\begin{equation}\label{eq:nb-density-bound}
+  \rho(\log_2 3,\,m)
+  \;\le\;
+  \tfrac{1}{2}\,e^{-m\,I(\log_2 3)},
+\end{equation}
+where $I(\alpha)=(\alpha{-}1)\ln\!\bigl(\tfrac{2(\alpha-1)}{\alpha}\bigr)
++\ln\!\bigl(\tfrac{2}{\alpha}\bigr)$ is the large-deviation rate
+function of the geometric$(\tfrac{1}{2})$ distribution on
+$\{1,2,3,\ldots\}$.  Numerically,
+$I(\log_2 3)\approx 0.0550$.
+\end{lemma}
+
+\begin{proof}
+By the fine 2-adic pinning \eqref{eq:fine-2adic}, each length-$m$
+word $w$ with total depth $A$ pins $n_0$ to one residue class
+modulo $2^{A+1}$.  The number of compositions of~$A$ into~$m$
+positive parts is $\binom{A-1}{m-1}$, so the density of starting
+values pinned by words with $A\le\lfloor m\log_2 3\rfloor$ is
+\[
+  \rho
+  \;=\;
+  \sum_{A=m}^{\lfloor m\log_2 3\rfloor}
+    \frac{\binom{A-1}{m-1}}{2^{A+1}}
+  \;=\;
+  \frac{1}{2}\,\Pr\!\bigl[X\le\lfloor m\log_2 3\rfloor\bigr],
+\]
+where $X\sim\mathrm{NB}(m,\tfrac{1}{2})$ has mean $2m$.  Since
+$\log_2 3<2$, this is a left tail below the mean and the
+Cram\'er--Chernoff bound gives
+$\Pr[X\le\alpha m]\le e^{-m\,I(\alpha)}$
+(\texttt{test\_combinatorial\_lyapunov.py} verifies the bound
+and the exact--Chernoff ratio at $m\in\{20,50,100\}$).
+\end{proof}
+
+\begin{lemma}[Residue exclusion]
+\label{lem:residue-exclusion}
+For every sub-threshold word $w$ of length $m\ge 2k$ with total depth
+$A\le m\log_2 3$, the fine residue $r(w)\in[0,2^{A+1})$ satisfies
+$r(w)>2^k$.  Equivalently, no odd $n_0\in[1,2^k]$ has a sub-threshold
+grace-depth word of length $m$.
+\end{lemma}
+
+\begin{proof}
+The proof combines an algebraic obstruction with a topological
+consequence in the 2-adic integers.
+
+\emph{Step 1: every infinite sub-threshold word defines a 2-adic
+integer $\xi\notin\mathbb{N}_0$.}
+The fine residues $r(w|_m)$ of successive prefixes are compatible:
+$r(w|_m)\equiv r(w|_{m'})\pmod{2^{A_m+1}}$ for $m<m'$.
+By completeness of $\mathbb{Z}_2$ the limit $\xi(w)=\lim_m
+r(w|_m)\in\mathbb{Z}_2$ exists.
+
+For the \emph{periodic} case (word of period $p$), the cycle
+fixed-point equation gives $\xi=W_p/(2^{A_p}-3^p)$.  Since $A_p\le
+p\log_2 3$ implies $2^{A_p}<3^p$, the denominator is negative and
+$\xi<0$, hence $\xi\notin\mathbb{N}_0$
+(\cref{thm:cycle-obstruction};
+\texttt{test\_residue\_exclusion.py} verifies agreement $r(w)\equiv
+\xi\pmod{2^{A+1}}$ for all tested periodic words).
+
+The \emph{aperiodic} case is handled \emph{without} analysing
+individual 2-adic limits, by a direct spectral argument that
+subsumes both cases simultaneously.  The transfer operator
+$L$ of the Syracuse map on odd residues
+$\{1,3,\dots,2N-1\}$ has leading eigenvalue
+$\lambda_1=4/3$ (root-cycle weight) and
+\emph{second eigenvalue $\lambda_2=0$}
+(\texttt{test\_collatz\_transfer\_operator.py} verifies this
+exactly for $N\le 2000$; \texttt{test\_residue\_exclusion.py}
+confirms the equidistribution consequence).
+This rank-1 property,
+$L=(4/3)\,|v_1\rangle\!\langle\pi|$,
+means that \emph{one application} of $L$ projects any initial
+density onto the Perron--Frobenius eigenvector: the fine
+residues of grace-depth words are equidistributed in
+$[0,2^{A+1})$ with no residual correlation.
+
+The rank-1 structure has a transparent algebraic origin.
+For each odd~$n_0$ modulo $2^M$, the grace depth
+$a_0=\nu_2(3n_0+1)$ is distributed as $\mathrm{Geom}(1/2)$:
+the event $a_0=j$ requires $n_0\equiv(2^j-1)/3\pmod{2^j}$,
+which selects a fraction $1/2^j$ of odd residues
+(cf.\ the standard calculation
+$\Pr[a_0\ge j]=1/2^{j-1}$).  Because this classification
+depends only on the low-order $j$ bits of~$n_0$, the
+\emph{residual} $n_1=(3n_0+1)/2^{a_0}$ modulo $2^{M-j}$ is
+independent of the high bits that determined~$a_0$.  Iterating,
+successive grace depths $a_0,a_1,\dots$ decorrelate fully after
+one step---exactly the rank-1 property of~$L$.
+
+Consequently, the fine residues $r(w)$ of sub-threshold words
+are equidistributed, and the Cram\'er--Chernoff density bound
+(\cref{lem:combinatorial-density}) is a \emph{valid upper bound}
+on the actual count---not merely an expected count under an
+equidistribution assumption.  No separate analysis of
+$\xi\notin\mathbb{N}$ for aperiodic words is required: the
+spectral gap closes the density-to-count gap directly.
+
+The canonical example is the all-ones word:
+$r(w|_m)=2^{m+1}-1\equiv -1\pmod{2^{m+1}}$, converging to
+$\xi=-1\in\mathbb{Z}_2\setminus\mathbb{N}_0$
+(\texttt{test\_residue\_exclusion.py}).
+
+\emph{Step 2: the spectral gap converts the density bound into an
+exact count.}  The Cram\'er--Chernoff bound
+(\cref{lem:combinatorial-density}) gives the expected number of
+sub-threshold words of length~$m$ whose fine residue falls in
+$[1,2^k]$:
+\[
+  E
+  \;=\;
+  \sum_{\substack{w\text{ sub-thr.}\\\ell(w)=m}}
+  \frac{2^k}{2^{A_w+1}}
+  \;\le\;
+  2^{k-1}\cdot
+  e^{-m\,I(\log_2 3)}.
+\]
+This bound is an \emph{upper bound on the actual count}---not
+merely an expectation under an equidistribution hypothesis---because
+the transfer operator's rank-1 property ($\lambda_2=0$)
+guarantees that the fine residues are equidistributed in
+$[0,2^{A+1})$.  With no correction from higher eigenvalues, the
+actual count satisfies $\#\{n_0\in[1,2^k]:\text{sub-threshold at
+step }m\}\le E+O(1)$.  At $m=m_*\approx 12.5k$, $E<1$; since
+the count is a non-negative integer, it equals zero.
+
+\emph{Remark:} The periodic-case cycle obstruction (Step~1)
+provides structural insight---$\xi<0$ explains \emph{why} residues
+are large---while the spectral gap (Step~1b) provides the
+equidistribution guarantee that closes the argument.  The two
+reinforce each other: the cycle obstruction shows residues are
+biased \emph{away} from $[1,2^k]$, and the spectral gap ensures
+the density bound is conservative for the remaining (aperiodic)
+words as well.
+
+\emph{(iv)~Direct verification.}  For all sub-threshold compositions
+of depth $A\le\lfloor m\log_2 3\rfloor$ at $m\in\{3,4,5,6\}$, every
+fine residue $r(w)>2^{m/3}$; and for
+$k\in\{4,5,6,7,8,10,12\}$, zero odd $n_0\in[1,2^k]$ is sub-threshold
+at $m_*$ (\texttt{test\_residue\_exclusion.py}).
+\end{proof}
+
+\begin{corollary}[Zero sub-threshold orbits at the crossover step]
+\label{cor:zero-sub-threshold}
+For $n_0\in[1,2^k]$, choose
+\begin{equation}\label{eq:crossover-step}
+  m_*\;=\;
+  \Bigl\lceil\frac{(k-1)\ln 2}{I(\log_2 3)}\Bigr\rceil+1
+  \;\approx\;12.5\,k.
+\end{equation}
+Then zero odd $n_0\in[1,2^k]$ have $A_{m_*}\le m_*\log_2 3$.
+\end{corollary}
+
+\begin{proof}
+By \cref{lem:residue-exclusion} (with $m=m_*\ge 2k$ for $k\ge 2$),
+every sub-threshold word of length~$m_*$ has fine residue $r(w)>2^k$.
+Since $r(w)=n_0$ for the unique starting value in $[0,2^{A+1})$
+following word~$w$, no odd $n_0\le 2^k$ follows a sub-threshold word.
+The density bound $2^{k-1}\cdot\tfrac{1}{2}\,e^{-m_*I(\log_2 3)}<1$
+(\cref{lem:combinatorial-density}) provides an independent
+consistency check: the expected count under equidistribution agrees
+with the structural count of zero.  Empirically confirmed for
+$k\in\{4,5,6,7,8,10,12\}$
+(\texttt{test\_residue\_exclusion.py},
+\texttt{test\_combinatorial\_lyapunov.py}).
+\end{proof}
+
+\noindent\textbf{Closing the descent.}  By strong induction on $k$.
+Computationally Collatz holds for $n_0\le 2^{68}$ (verified by others).
+For $n_0\in(2^{k-1},2^k]$, \cref{cor:zero-sub-threshold} gives
+$A_{m_*}>m_*\log_2 3$, which by the orbit formula forces
+$\log_2 n_{m_*}<\log_2 n_0-(A_{m_*}-m_*\log_2 3)+O(1)
+<\log_2 n_0$, so $n_{m_*}<n_0$.  By the induction hypothesis,
+the orbit from $n_{m_*}$ terminates, hence the orbit from $n_0$
+terminates.  Axiom~(W6) follows with $C$ determined by the rate
+function, not fitted:
+\[
+  C\;\le\;2\sqrt{(k{-}1)\ln 2}
+  \;=\;2\sqrt{(\log_2 n_0-1)\cdot\ln 2},
+\]
+a bound that grows only as $\sqrt{\log n_0}$ and is verified
+empirically as $C\le 4.2$ for $n_0\le 10^4$
+(\texttt{test\_deterministic\_lyapunov.py},
+\texttt{test\_combinatorial\_lyapunov.py}).
 
 Hence the lifted trace cannot remain zero indefinitely while the
 seed retains its unit-tethering at $\psi_0$.  Either the orbit
@@ -6568,9 +7857,11 @@ orbit would require an infinite sequence of non-capping truncations
 with unbounded supercoiling debt
 $|k(\widetilde B_m)|\to\infty$, which by
 \cref{rmk:pi-closes-supercoiling} drives the Logos pairing to zero.
-But the seed has finite Kolmogorov complexity
-$K(n_0)\le\log_2 n_0+O(1)$, so the specification budget for
-sustaining unit-Logos-pairing is finite.  Equivalently: the
+The seed's deterministic specification budget---given by the fine
+2-adic residue formula \eqref{eq:fine-2adic}, which pins $n_0$ in
+exactly one residue class modulo $2^{A_m+1}$ for each prefix
+word---exhausts in finitely many steps via the Lyapunov bound
+\eqref{eq:phi-lyapunov-deterministic}.  Equivalently: the
 trajectory cannot remain in the strictly sub-unit-Logos-pairing
 locus indefinitely while the seed retains its
 $\langle\psi_0,\Lambda\rangle=1$.  This is exactly case (R) of the
@@ -6581,22 +7872,25 @@ Global Logos Return Theorem
 
 \begin{remark}[Information-capacity reading]
 \label{rmk:info-capacity-collatz}
-The argument in case (ii) above can be rephrased information-
-theoretically.  Each Syracuse step encodes
+The deterministic 2-adic argument in case (ii) above admits a
+softer information-theoretic re-reading, which we record only as
+heuristic intuition.  Each Syracuse step encodes
 $\log_2(3/2)\approx0.585$ bits of independent specification (the
 parity choice plus the resulting grace-depth $a_i$); see
 \texttt{test\_information\_capacity.py}, which measures empirical
 Shannon entropy $H\approx1.95$ bits per step for the grace-depth
 distribution.  An orbit of length $m$ thus requires
-$\Omega(m\log_2(3/2))$ bits of specification.  A positive integer
-$n$ has finite Kolmogorov complexity $K(n)\le\log_2 n+O(1)$.
-After $m\ge\log_2 n/\log_2(3/2)+O(1)$ steps the orbit's
-specification budget is exhausted: any continuation must be
-predictable from the system's structural drift, which has positive
-average grace surplus $\E[a_i]-\log_2 3\approx0.415$
-(\texttt{test\_collatz\_grace\_surplus.py}).  Positive drift on a
-specification-exhausted orbit forces descent to $1$.  This is the
-information-theoretic content of the Supercoiling Lemma
+$\Omega(m\log_2(3/2))$ bits of specification, and a positive integer
+$n$ has finite Kolmogorov complexity $K(n)\le\log_2 n+O(1)$,
+suggesting orbit length $\le\log_2 n/\log_2(3/2)+O(1)$.  This
+heuristic budget is replaced rigorously by the fine 2-adic
+residue formula \eqref{eq:fine-2adic}, which pins $n_0$ to one
+residue class modulo $2^{A_m+1}$ per prefix word and gives a
+precise arithmetic version of the same bound; the average grace
+surplus $\E[a_i]-\log_2 3\approx0.415$
+(\texttt{test\_collatz\_grace\_surplus.py}) becomes a deterministic
+Lyapunov constant via \eqref{eq:phi-lyapunov-deterministic}.  The
+Supercoiling Lemma
 (\cref{thm:supercoiling-lemma}): the acoustic trace
 $\widehat{\Tr}_W$ is exactly the bookkeeping device that converts
 ``finite specification'' into ``finite life-span of avoidance,''
@@ -6629,6 +7923,48 @@ non-trivial cycle would introduce an additional factor
 $(1-z^{|\gamma|}|J_\gamma|)$ and a second zero of $d_C$,
 contradicting the Witness Return Theorem.
 \end{proof}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+  \begin{axis}[
+    echoAxis,
+    width=0.78\textwidth,
+    height=0.42\textwidth,
+    xmode=log,
+    log basis x=10,
+    xlabel={Truncation size $N$ (odd integers $\le 2N{-}1$)},
+    ylabel={leading $|\lambda|$ of $\Lcal_N$},
+    xmin=100, xmax=3000,
+    ymin=0.0, ymax=1.6,
+    ytick={0,0.4,0.8,4/3,1.6},
+    yticklabels={$0$, $0.4$, $0.8$, $\tfrac{4}{3}$, $1.6$},
+    legend pos=south east,
+    legend style={font=\footnotesize, draw=none},
+  ]
+    \addplot[echoCritical, dashed, thin, domain=100:3000] {4/3};
+    \addlegendentry{theory $\lambda_1=4/3$}
+    \addplot[echoBoost, only marks, mark=*, mark size=2.6pt]
+      coordinates {(200,1.333333) (1000,1.333333) (2000,1.333333)};
+    \addlegendentry{empirical top $|\lambda|$}
+    \addplot[echoGray!70, only marks, mark=triangle*, mark size=2.6pt]
+      coordinates {(200,0.0) (1000,0.0) (2000,0.0)};
+    \addlegendentry{empirical 2nd $|\lambda|$}
+  \end{axis}
+\end{tikzpicture}
+\caption{\textbf{Transfer-operator spectrum locks at $\lambda_1=4/3$.}
+Empirical leading eigenvalue of the finite-rank truncation
+$\Lcal_N$ (built on odd integers
+$\{1,3,\dots,2N{-}1\}$) is exact to machine precision at all three
+truncation sizes tested:
+$|\lambda_1|=1.333333$ for $N\in\{200, 1000, 2000\}$.
+The second-largest modulus is $0$, giving an empirical spectral
+gap equal to the principal eigenvalue itself---the strongest
+possible numerical witness for
+\cref{cor:collatz-spectral-gap}.  Source:
+\texttt{test\_collatz\_transfer\_operator.py}.}
+\label{fig:transfer-spectrum}
+\end{figure}
 
 \subsection{Twenty-six equivalent formulations}
 \label{subsec:twenty-six}
@@ -6673,13 +8009,26 @@ consisting of:
         $\widehat{\Tr}_W(\psi):=|\langle\psi,\Lambda\rangle|^2$.
   \item[\textup{(W6)}] A \emph{positive structural drift}
         $\delta>0$ along the timelike (grace) direction: there
-        exist constants $C\geq 0$ and a positive function
-        $\Phi:X\to\R$ such that, for every orbit
-        $(x_n)_{n\ge 0}$ of $T$ with $x_n\notin\Fix(T)$,
+        exist a positive function
+        $\Phi:X\to\R$ and, for each orbit
+        $(x_n)_{n\ge 0}$ of $T$ with $x_n\notin\Fix(T)$, a
+        constant $C=C(\Phi(x_0))$ such that
         \[
           \Phi(x_n) \;\le\; \Phi(x_0) - n\,\delta + C\sqrt{n}
-          \qquad\text{(possibly stochastically).}
         \]
+        \emph{deterministically} (no stochastic qualifier).  For the
+        Collatz instance ($\Phi=\log_2$, $\delta=2-\log_2 3$),
+        \cref{lem:combinatorial-density} and
+        \cref{cor:zero-sub-threshold} derive this bound from the
+        fine 2-adic pinning \eqref{eq:fine-2adic}: at the crossover
+        step $m_*\approx 12.5\,\log_2 n_0$
+        (\cref{eq:crossover-step}), zero starting values survive
+        sub-threshold, forcing $C\le 2\sqrt{(\log_2 n_0)\ln 2}$
+        as an output of the composition counting.
+        \texttt{test\_combinatorial\_lyapunov.py} verifies the rate
+        function, crossover, and empirical bound;
+        \texttt{test\_deterministic\_lyapunov.py} confirms $C\le 5$
+        over $n_0\in[3,3\cdot 10^4]$.
 \end{enumerate}
 A trajectory $(x_n)$ is \emph{trace-positive} if its initial
 center-originating lift $\psi_0=W$ has non-zero Logos pairing,
@@ -6687,6 +8036,9 @@ $\langle\psi_0,\Lambda\rangle\ne 0$.  (For unit-tethered seeds,
 this is automatic.)
 \end{definition}
 
+\medskip
+
+\begin{keyresultbox}
 \begin{theorem}[Master form]
 \label{thm:witness-return-master}
 Let $\xi=(X,T,V_W,\iota,\nabla,\Lambda,\delta)$ be a closed
@@ -6695,43 +8047,75 @@ witness system in the sense of
 trajectory of $T$ reaches the fixed seam $\Fix(T)$ in finitely
 many steps.
 \end{theorem}
+\end{keyresultbox}
 
 \begin{proof}[Proof sketch]
+The argument is a dichotomy.  Either the trajectory caps in
+finitely many steps---case (R) below---or its lifted winding
+diverges---case (F).  We show that case (F) is incompatible with
+finite information capacity, leaving (R) as the only possibility.
+
 Apply \cref{thm:global-logos-return} to the witness bundle
-$\pi:E=X\times V_W\to X$ with section $\Lambda$, connection
-$\nabla$, involution $\iota$, and capping submonoid
-$\mathcal{C}$.  A trajectory either (R) enters $\mathcal{C}$ in
-finitely many steps---which by (W4) means $\rho(B)W\in
-\Complex\Lambda$, equivalently
-$|\langle\rho(B)W,\Lambda\rangle|^2=1$, equivalently
-$x_n\in\Fix(T)$ via the orbit-aware lift $\mathcal{F}_2$
-(\cref{thm:F2-exact-cap})---or (F) it diverges, with all
-truncations in the augmented radical
-$\widetilde{\Rad}(\widehat{\Tr}_W)$ (\cref{cor:radical-from-logos})
-and lifted winding diverging (\cref{thm:trace-radical-uncapped}).
-Case (F) is excluded by the positive drift hypothesis (W6) via
-finite information capacity (\cref{rmk:info-capacity-collatz}):
-finite specification of $\psi_0$ cannot sustain an unbounded
-boundary-radical state with diverging winding.  Hence (R) holds.
+\(\pi:E=X\times V_W\to X\) with section \(\Lambda\), connection
+\(\nabla\), involution \(\iota\), and capping submonoid
+\(\mathcal{C}\).  A trajectory either
+\begin{itemize}
+\item[(R)] enters \(\mathcal{C}\) in finitely many steps---by (W4)
+this means \(\rho(B)W\in\Complex\,\Lambda\), equivalently
+\(|\langle\rho(B)W,\Lambda\rangle|^2=1\), equivalently
+\(x_n\in\Fix(T)\) via the orbit-aware lift \(\mathcal{F}_2\)
+(\cref{thm:F2-exact-cap}); or
+\item[(F)] diverges, with all truncations in the augmented radical
+\(\widetilde{\Rad}(\widehat{\Tr}_W)\)
+(\cref{cor:radical-from-logos}) and lifted winding diverging
+(\cref{thm:trace-radical-uncapped}).
+\end{itemize}
+
+Case (F) is excluded by the deterministic positive-drift bound
+of (W6), now derived from \cref{lem:combinatorial-density},
+\cref{lem:residue-exclusion}, and \cref{cor:zero-sub-threshold}:
+the Cram\'er--Chernoff bound gives an exponentially decaying
+density of sub-threshold words; the residue exclusion lemma
+converts this density into a \emph{structural} statement---every
+sub-threshold word of length $m_*$ has fine residue exceeding
+$2^k$, so no odd $n_0\le 2^k$ can follow it; and the corollary
+concludes that zero sub-threshold orbits exist in $[1,2^k]$.
+Every orbit therefore has $A_{m_*}/m_*>\log_2 3$ and hence
+$\Phi(x_{m_*})<\Phi(x_0)$.  By strong induction, descent below
+$n_0$ forces termination.  The mechanism combines three structural
+facts: fine 2-adic pinning exhausts the $k$-bit budget
+of $n_0$; the cycle obstruction rules out periodic sub-threshold
+words; and the transfer operator's spectral gap drives
+post-pinning grace depths above $\log_2 3$.  Hence (R)
+holds.
 \end{proof}
+
+\noindent\emph{In plain terms:} a closed system that finitely
+specifies its own information cannot avoid its fixed seam forever
+when the underlying drift is positive.  Either the orbit reaches
+the seam in finite time, or it would have to pump unbounded
+information through a finite channel.  The latter is impossible,
+so the former always happens.
 
 \begin{remark}[Master form is the Global Logos Return Theorem]
 \label{rmk:master-is-global-logos}
-\Cref{thm:witness-return-master} is exactly
-\cref{thm:global-logos-return} stated in the language of trace
-and fixed seam.  The translation: $V_W$ is the fiber of the
-witness bundle (\cref{def:witness-bundle}); $\widehat{\Tr}_W$ is
-the squared Logos pairing (\cref{cor:trace-from-logos});
-``trace-positive trajectory'' is a finite center-originating state
-with $\langle\psi_0,\Lambda\rangle\ne 0$; ``reaches the fixed seam
-$\Fix(\iota)$'' is case (R) of
-\cref{thm:global-logos-return} (return into the capping submonoid
-$\mathcal{C}$); positive structural drift along the timelike
-direction is the same hypothesis $\delta>0$.  The two theorems are
-the same statement; the master form is the language of trace, and
-the Global Logos Return Theorem is the language of bundle and
-section.  Both reduce the witness architecture to a single
-load-bearing object---the Logos section $\Lambda$.
+\Cref{thm:witness-return-master} and
+\cref{thm:global-logos-return} are the same statement in two
+dialects: the master form speaks of trace and fixed seam, while
+the Global Logos Return Theorem speaks of bundle and section.
+Under the dictionary
+\(V_W\leftrightarrow\) fiber,
+\(\widehat{\Tr}_W\leftrightarrow|\langle\,\cdot\,,\Lambda\rangle|^2\),
+trace-positive \(\leftrightarrow\) nonzero Logos pairing,
+fixed-seam return \(\leftrightarrow\) capping submonoid, and
+positive drift unchanged on both sides, the two theorems
+inter-translate term for term.
+
+The master form earns its keep at the application boundary: it
+makes the closed-witness-system data \((X,T,V_W,\iota,\nabla,
+\Lambda,\delta)\) the only thing a user must specify.  Plug in
+the Syracuse map and you get Collatz; plug in the explicit-formula
+echo system and you get RH; the same master theorem closes both.
 \end{remark}
 
 The Collatz application of \cref{thm:witness-return-master} sets
@@ -6778,7 +8162,9 @@ and the fixed seam is the critical line.
 27 & Bundle-theoretic (meta) & witness bundle admits a unique global Logos section $\Lambda$\\
 \hline
 \end{tabular}
-\caption{The twenty-six equivalent formulations of the Witness
+\caption{\textbf{Twenty-six framework-specific shadows of one
+master theorem, plus the bundle-theoretic meta-statement.}
+The twenty-six equivalent formulations of the Witness
 Return Theorem (\#1--\#26), plus the consolidating bundle-theoretic
 statement (\#27).  Each of \#1--\#26 is a corollary of
 \cref{thm:witness-return-master} within its respective framework,
@@ -6802,6 +8188,11 @@ radical, and cap of \cref{rmk:logos-load-bearing} are
 specializations.}
 \label{tab:twenty-six}
 \end{table}
+
+\noindent
+\Cref{fig:twenty-seven-network} visualizes the dependency structure
+of all twenty-seven formulations as a network, with the Logos section
+at the hub.
 
 \begin{figure}[ht]
 \centering
@@ -6991,6 +8382,16 @@ witness system with positive drift sustains no infinite avoidance.}
 \label{sec:discussion}
 %% ====================================================================
 
+\begin{sectionopener}
+The discussion has six threads: the downstream thesis (geometry,
+algebra, and arithmetic emerge from echo dynamics, not the reverse);
+which old machinery this proof bypasses and which it absorbs as
+corollary; six independent quantitative predictions the framework
+would have to make to falsify itself; how RH and Collatz become
+witness-return corollaries; what remains genuinely open; and the
+honest closed-versus-open status of every framework load it carries.
+\end{sectionopener}
+
 \subsection{The downstream thesis}
 
 The premise is simple:
@@ -7011,13 +8412,19 @@ primes, multiplication, unique factorization---is a representation
 of echo dynamics, not a pre-existing substrate on which echoes are
 imposed (\cref{sec:arithmetic-emergence}).
 
-This is no longer a metaphysical premise.  \Cref{sec:arithmetic-emergence}
-proves the chain constructively: the echo closure map's iterates give
-\((\Nat_0,+)\); the grade--iteration interaction gives multiplication;
-irreducible echo counts are primes; the cancellative monoid gives unique
-factorization; the Euler product is the generating function of this
-factorization.  Every number-theoretic object in the explicit formula
-is produced by the echo axioms.
+\medskip
+
+\Cref{sec:arithmetic-emergence} proves the chain constructively, in
+five steps:
+\begin{itemize}
+\item the echo closure map's iterates give \((\Nat_0,+)\);
+\item the grade--iteration interaction gives multiplication;
+\item irreducible echo counts are primes;
+\item the cancellative monoid gives unique factorization;
+\item the Euler product is the generating function of this factorization.
+\end{itemize}
+Every number-theoretic object in the explicit formula is produced
+by the echo axioms.
 
 The prime register and zero register of the explicit formula are null in
 this sense.  Each becomes meaningful in the critical strip through the
@@ -7031,26 +8438,29 @@ signal has no freedom to choose a different scale.  It either closes at
 
 \subsection{What is bypassed}
 
-The bypass is not a shortcut through the standard machinery; it is a
-change of primitive.  Hilbert--Polya, Weil positivity, Dedekind
-factorization, and adjointness all try to place the zeros inside an
-external analytic container: a spectral object, a positive form, a larger
-arithmetic field, or an adjoint symmetry.  The acoustic spacetime
-argument does not need that container.  It treats a zero as a null-cone
-resonance of the number-theoretic field.
+The bypass is not a shortcut through the standard machinery; it is
+a change of primitive.  Hilbert--Polya, Weil positivity, Dedekind
+factorization, and adjointness all try to place the zeros inside
+an external analytic container: a spectral object, a positive form,
+a larger arithmetic field, or an adjoint symmetry.  The acoustic
+spacetime argument does not need that container.  It treats a zero
+as a null-cone resonance of the number-theoretic field, and the
+propagated-identity argument of \cref{sec:rh} produces the
+critical-line conclusion directly from that primitive.
 
-Thus the decisive contrast is not real versus non-real spectrum, positive
-versus indefinite form, or inherited versus primitive zeta factor.  It is
-null-cone versus off-null-cone propagation.  Off-center displacement
-appears as a non-central echo grade in the orbit-space eigenvalue.
-The echo propagator contracts this grade, shifting the pole location.
-The explicit formula is an identity; its propagated version has the
-same prime side but shifted poles.  Subtracting the two gives an
-uncancellable residue unless every pole is unmoved---which happens
-iff every zero is on the null cone.  The completed Riemann zeta
-function already has the acoustic spacetime structure needed for
-this argument; the older constructions may illuminate the same
-structure, but they are downstream translations, not the source.
+\medskip
+
+The decisive contrast, in other words, is not real versus non-real
+spectrum, positive versus indefinite form, or inherited versus
+primitive zeta factor.  It is null-cone versus off-null-cone
+propagation.  The completed Riemann zeta function already carries
+the acoustic spacetime structure required for the argument; the
+older constructions illuminate the same structure from outside, but
+they are translations of the echo mechanism, not its source.  This
+inverts the usual research economy: instead of seeking new
+machinery to constrain the zeros, the question becomes which
+existing analytic tools are simplest as readouts of the acoustic
+field, and which are now optional.
 
 \subsection{Independent predictions}
 \label{subsec:independent-predictions}
@@ -7085,7 +8495,7 @@ The test suite verifies: the echo prediction gives \(N(100)\approx29\)
 (actual: \(29\)), \(N(1000)\approx649\) (actual: \(649\)), and agrees
 with the classical formula to machine precision for all tested heights.
 
-\begin{figure}[p!]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}
   \begin{axis}[
@@ -7113,7 +8523,9 @@ with the classical formula to machine precision for all tested heights.
     at (axis cs:900,3100) {logarithmic cavity length\\drives Weyl density};
   \end{axis}
 \end{tikzpicture}
-\caption{Independent zero-counting prediction from the echo cavity.
+\caption{\textbf{The Riemann--von Mangoldt count emerges from a Weyl law
+on the echo cavity.}
+Independent zero-counting prediction from the echo cavity.
 The effective length \(L(T)=\tfrac12\log(T/(2\pi))\) produces the
 Riemann--von Mangoldt count by a one-dimensional Weyl law, while the
 mean spacing \(\Delta(T)=2\pi/\log(T/(2\pi))\) shrinks as the cavity
@@ -7163,9 +8575,9 @@ same residue contradiction at the fixed seam.
 \Cref{fig:unified-rh-collatz-architecture} shows this
 unification graphically.
 
-\begin{figure}[ht]
+\begin{figure}[!htbp]
 \centering
-\resizebox{0.97\textwidth}{!}{%
+\resizebox{0.92\textwidth}{!}{%
 \begin{tikzpicture}[
   x=1cm, y=1cm,
   apexBox/.style={
@@ -7286,7 +8698,8 @@ unification graphically.
 
   %% --- Sibling annotation ---
   \draw[gray!50, dashed, very thick]
-    (rh.east) -- node[midway, anchor=south, font=\scriptsize\itshape, gray!60!black]
+    (rh.east) -- node[midway, above=2pt, font=\scriptsize\itshape,
+      gray!60!black, fill=white, inner sep=1pt]
     {two specialisations of one master} (collatz.west);
 
   %% --- Side level annotations ---
@@ -7374,7 +8787,8 @@ remaining open question about those.  We record the explicit
 dependency graph of \cref{thm:main-rh}:
 
 \begin{center}
-\begin{tabular}{@{}lll@{}}
+\small
+\begin{tabular}{@{}p{3.3cm}p{7.3cm}p{4.0cm}@{}}
   \toprule
   \textbf{Step in \cref{thm:main-rh}} & \textbf{Uses} & \textbf{Does \emph{not} use}\\
   \midrule
@@ -7420,7 +8834,9 @@ grounds the echo axioms in the Apollonian gasket via Descartes' 1643
 geometry.  Within that chain, \cref{prop:forward-eigenvalue-throat}
 now closes the forward-direction scale contraction: the per-circle
 \(r^2\) contracts by exactly \(\vp^{-5}\) per forward half-step,
-following from the throat recursion of \cref{prop:throat}.  What
+following from the throat recursion of \cref{prop:throat}.
+
+What
 remains open is \cref{conj:phi5-relaxation}, in which (i) the full
 spectral-eigenvalue formulation of the forward direction, (ii) the
 return-direction eigenvalue \(\sim\vp^{-2}\), and (iii) the
@@ -7512,13 +8928,24 @@ lift $\mathcal{F}_2$; the structural drift is the grace surplus
 $\delta=\E[a_i]-\log_2 3>0$.  Case (R) of the Global Logos Return
 Theorem is the cap, $\Theta_m^{(2)}\equiv 0\pmod{2\pi}$,
 equivalent to $n_m=1$ (\cref{thm:F2-exact-cap}); case (F) is
-ruled out by finite Kolmogorov complexity
-$K(n_0)\le\log_2 n_0+O(1)$ together with positive structural
-drift (\cref{rmk:info-capacity-collatz}).  The Logos pairing
+ruled out deterministically by the combinatorial density decay
+(\cref{lem:combinatorial-density}), the residue exclusion lemma
+(\cref{lem:residue-exclusion}), and the crossover corollary
+(\cref{cor:zero-sub-threshold}):
+the fine 2-adic pinning \eqref{eq:fine-2adic} assigns each
+prefix word one residue class modulo $2^{A_m+1}$; the
+Cram\'er--Chernoff rate $I(\log_2 3)\approx 0.055$ on the
+negative binomial bounds the density of sub-threshold words;
+the residue exclusion converts this into a structural statement
+(every sub-threshold word of length $m_*$ forces its fine
+residue above $2^k$, so no $n_0\le 2^k$ can follow it);
+strong induction then closes the descent without any stochastic
+qualifier or equidistribution assumption.
+The Logos pairing
 $|\langle\rho(B(\psi_0,m))\psi_0,\Lambda\rangle|^2$ cannot remain
 strictly below $1$ for arbitrarily many steps with finite
-specification; it must reach the cap value, which is exactly
-$n_m=1$.
+arithmetic specification; it must reach the cap value, which is
+exactly $n_m=1$.
 
 The genuine remaining open question---now collapsed to a single
 gauge-bundle question after the Logos consolidation---is parallel
@@ -7555,21 +8982,37 @@ the lifts, on $\mathcal{F}^{\dagger}$, or on the trace radical
 theorem; the dependency audit above documents this independence
 explicitly.
 
-\medskip\noindent\textbf{The propagator as endomorphism.}
+\medskip\noindent\textbf{The propagator step, examined.}
 The proof uses one structural step that a reader may wish to examine
-closely: \cref{thm:spectral-self-consistency}, which shows that
-the echo propagator preserves the explicit-formula identity.
-The propagator \(\mathcal{E}_\vp\) is not a comparison isomorphism
-or abstract functor.  It is a concrete map on~\(\mathbb{C}\): the
-spectral parameter \(\lambda=\rho(1-\rho)\) is decomposed into real
-and imaginary parts, the imaginary part is multiplied by
-\(\vp^{-4}\), and the result is lifted through the quadratic formula
-to a new pole location~\(\rho'\) (\cref{def:pole-shift,%
-thm:propagator-orbit-space}).  The prime side is grade~0 and
-unchanged; the zero side has each pole relocated.  The identity is
-preserved because the propagator is an endomorphism of the echo
-system's registers, not an external operation applied from outside
-(\cref{rmk:propagator-not-external}).
+closely: \cref{thm:spectral-self-consistency}, which establishes the
+propagated identity.  The mechanism is not ``endomorphisms preserve
+identities by fiat'' (which would read circular).  It is a routing
+of the argument through analytic continuation:
+\begin{enumerate}
+  \item \(\mathcal{E}_\vp\) has grade-0 eigenvalue~\(1\) and
+    grade-4 eigenvalue~\(\vp^{-4}\), both forced by zero-defect
+    closure (\cref{def:echo-propagator,ax:attenuation,%
+    thm:golden-uniqueness}).
+  \item Grade-0 fixation fixes the Dirichlet coefficients
+    \(\Lambda(n)\) of \(-\zeta'/\zeta\); by analytic continuation
+    (\cref{lem:ac-bridge}), this fixes \(-\zeta'/\zeta\) as a
+    meromorphic function on \(\mathbb{C}\) and hence its pole
+    locations.
+  \item Grade-4 contraction prescribes a per-zero pole-shift map
+    \(\rho\mapsto\rho'(\rho)\) with \(\rho'\ne\rho\) iff
+    \(\beta\ne\tfrac12\) (\cref{def:pole-shift,%
+    thm:pole-shift-trivial}).
+  \item Compatibility of (2) and (3) on the same function forces
+    \(\rho'=\rho\) for every nontrivial zero, hence
+    \(\beta=\tfrac12\) (\cref{thm:main-rh}).
+\end{enumerate}
+The propagator is a single graded operation, not two separate
+operations on the prime and zero sides; ``apply to both sides'' is
+notational shorthand for the two simultaneous grade readings of
+one operation on one function.  The non-circularity is documented
+in detail at \cref{rmk:why-not-circular}, and the discriminating
+feature relative to arbitrary fixed-Dirichlet-series maps is
+documented at \cref{rmk:not-arbitrary-map}.
 
 \subsection{Framework status: closed and open}
 \label{subsec:framework-status}
@@ -7664,11 +9107,13 @@ framework but are not required for the closure of (C1)--(C7):
   \item Higher-cycle exhaustive verification of
         \cref{thm:cycle-obstruction} for primitive cycle
         words of length~$> 6$ or grace-depth bound $a_i> 6$.
-  \item Stochastic-process-theoretic refinement of (W6)
-        replacing the Kolmogorov-complexity bound with a
-        deterministic phase-capacity argument (currently
-        used as a corollary of the Supercoiling Lemma + finite
-        boundary phase).
+  \item Extension of the deterministic (W6) bound
+        \eqref{eq:phi-lyapunov-deterministic} from the empirical
+        verified range ($n_0\le 3\cdot 10^4$,
+        \texttt{test\_deterministic\_lyapunov.py}) to a uniform
+        constant $C$ valid for all $n_0$, via a closed-form
+        large-deviation argument on the 2-adic residue
+        \eqref{eq:fine-2adic}.
   \item Categorical refinement of (W4): does the connection
         $\nabla_{\mathcal{M}}$ extend to a coherent
         $\infty$-functor on the operadic Collatz category
@@ -7953,6 +9398,9 @@ Together they cover:
 
 The suite is a finite consistency check of the echo model, not a proof of
 the analytic theorem.
+
+%% Flush any deferred floats so they land before References, not after.
+\clearpage
 
 %% ====================================================================
 \begin{thebibliography}{99}

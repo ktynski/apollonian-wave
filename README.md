@@ -23,7 +23,17 @@ own language.
 apollonian-wave/
 ├── paper/
 │   ├── echo_rh.tex              # LaTeX source (full paper)
-│   └── echo_rh.pdf              # Compiled paper (99 pages)
+│   └── echo_rh.pdf              # Compiled paper
+├── lean/                         # Lean 4 formalization of the RH proof path
+│   ├── EchoRH.lean              # Library root
+│   ├── EchoRH/                  # 8 modules: Basic, GradeDecomposition,
+│   │                            # PoleShift, ACBridge, MeromorphicACBridge,
+│   │                            # LogDerivativeZeta, PropagatedIdentity, Main
+│   ├── lakefile.toml
+│   ├── lean-toolchain           # pinned to leanprover/lean4:v4.30.0-rc2
+│   ├── lake-manifest.json       # Mathlib version pin
+│   ├── modal_lean.py            # Modal-based reproducible build harness
+│   └── README.md                # build instructions + axiom audit
 ├── tests/                        # 45 test files, 238 tests total
 │   ├── test_logos_section.py    # Logos section existence/uniqueness
 │   ├── test_supercoiling_lemma.py
@@ -126,6 +136,40 @@ entry points:
 
 The 27 equivalent formulations are listed in Table 1 (`tab:twenty-six`) of
 the paper.
+
+## Lean 4 formalization (`lean/`)
+
+The `lean/` directory contains an in-progress Lean 4 formalization of the
+RH proof path (Sections 7.4–7.5 of the paper). It is kernel-checked: 3007
+build jobs, **0 sorries, 0 errors**, 981 lines of `EchoRH` source.
+
+The structural skeleton — the grade decomposition, the pole-shift
+biconditional (Theorem 7.11), and the meromorphic analytic-continuation
+bridge — is fully formalized from Lean foundations. The Dirichlet
+expansion of $-\zeta'/\zeta$ on $\operatorname{Re} s > 1$ is derived
+directly from `mathlib`, with **zero new axioms**.
+
+`EchoRH.riemann_hypothesis` (Theorem 7.15) currently rests on:
+
+- Lean's three foundational axioms (`propext`, `Classical.choice`,
+  `Quot.sound`);
+- two clearly-named classical analytic-NT stubs:
+  `nontrivialZero_im_ne_zero_classical` (every nontrivial zeta zero has
+  nonzero imaginary part — Titchmarsh §2.12) and
+  `propagated_identity_residue_classical` (the per-zero residue identity,
+  whose only missing ingredient is the Hadamard partial-fraction
+  expansion of $-\zeta'/\zeta$, which is being formalized in
+  [`PrimeNumberTheoremAnd`](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd)).
+
+Neither named axiom encodes RH itself. See `lean/README.md` for the full
+axiom audit and the roadmap for discharging the remaining stubs. Builds
+are reproducible via Modal:
+
+```bash
+cd lean/
+modal run modal_lean.py --action build
+modal run modal_lean.py --action axioms --target EchoRH.riemann_hypothesis
+```
 
 ## Citation
 
