@@ -1,0 +1,94 @@
+==========================================================================
+VERIFICATION ARTIFACT — apollonian-wave
+==========================================================================
+
+Generated:  2026-05-03 04:41:30 UTC
+Git commit: 5eada40332f9002e66cd13238fb1234c8a8bcd5d
+Host:       Darwin 24.1.0 arm64
+Python:     Python 3.14.3
+Pytest:     pytest 9.0.2
+
+==========================================================================
+PART 1 — Numerical falsifier suite (tests/)
+==========================================================================
+
+Command:    pytest tests/ -q --tb=no
+Wall clock: 59.98 seconds
+
+Result:
+    238 passed in 59.98s
+
+==========================================================================
+PART 2 — File-level breakdown (45 files, 238 tests)
+==========================================================================
+
+   20 tests   test_logos_section.py
+   18 tests   test_merkaba_fano_module.py
+   14 tests   test_canonical_exact_cap.py
+   12 tests   test_supercoiling_lemma.py
+   11 tests   test_acoustic_braid_action.py
+   10 tests   test_witness_acoustic_trace.py
+    9 tests   test_witness_trace.py
+    9 tests   test_collatz_lift_functor.py
+    9 tests   test_cl31_algebra.py
+    9 tests   test_cl11_algebra.py
+    7 tests   test_five_witness_ops_algebra.py
+    7 tests   test_collatz_involution.py
+    6 tests   test_collatz_orbit_formula.py
+    5 tests   test_percolation_chirality.py
+    5 tests   test_merkaba_stitch_count.py
+    5 tests   test_ghost_braid_trace.py
+    5 tests   test_collatz_braid_trace.py
+    4 tests   test_trefoil_lift_topology.py
+    4 tests   test_trefoil_boundary.py
+    4 tests   test_forward_eigenvalue_theorem.py
+    4 tests   test_five_witness_ops_dynamics.py
+    4 tests   test_exponent_decomposition.py
+    4 tests   test_collatz_cycle_obstruction.py
+    4 tests   test_bivector_hopf_correspondence.py
+    3 tests   test_witness_is_hopf_base.py
+    3 tests   test_phi6_universality.py
+    3 tests   test_orbit_knot_histogram.py
+    3 tests   test_information_capacity.py
+    3 tests   test_dim_dependent_contraction.py
+    3 tests   test_collatz_transfer_operator.py
+    3 tests   test_collatz_grace_surplus.py
+    3 tests   test_chiral_fold_equatorial.py
+    3 tests   test_3d_principal_orbit_jacobian.py
+    2 tests   test_writhe_jac_identity.py
+    2 tests   test_spectral_gap_discretization.py
+    2 tests   test_principal_orbit_knot_type.py
+    2 tests   test_principal_orbit_jacobian.py
+    2 tests   test_phi_squared_over_2_vs_delta.py
+    2 tests   test_phi5_consistency.py
+    2 tests   test_per_step_jac_factorization.py
+    2 tests   test_mirror_flip_hopf_swap.py
+    2 tests   test_hopf_linking_vs_depth.py
+    2 tests   test_hopf_lift_linking.py
+    2 tests   test_fredholm_determinant.py
+
+==========================================================================
+PART 3 — Lean 4 formalization axiom audit
+==========================================================================
+
+Build:      lean/ — 3007 build jobs, 0 sorries, 0 errors, 981 LOC
+Toolchain:  leanprover/lean4:v4.30.0-rc2
+
+Final theorem:
+    EchoRH.riemann_hypothesis : ∀ ρ, IsNontrivialZetaZero ρ → ρ.re = 1/2
+
+#print axioms EchoRH.riemann_hypothesis  -->
+
+    propext                                       (Lean foundation)
+    Classical.choice                              (Lean foundation)
+    Quot.sound                                    (Lean foundation)
+    EchoRH.nontrivialZero_im_ne_zero_classical    (Titchmarsh §2.12)
+    EchoRH.propagated_identity_residue_classical  (Hadamard expansion in PNT+)
+
+Reproduce with:
+    cd lean/
+    modal run modal_lean.py --action axioms --target EchoRH.riemann_hypothesis
+
+==========================================================================
+End of verification artifact.
+==========================================================================
